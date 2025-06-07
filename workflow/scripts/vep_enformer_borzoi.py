@@ -141,7 +141,10 @@ if __name__ == "__main__":
 
     model = grelu.resources.load_model(project=args.project, model_name=args.model_name)
     columns = model.data_params['tasks']["name"]
-    window_size = model.data_params["train_seq_len"]
+    try:
+        window_size = model.data_params["train_seq_len"]
+    except KeyError:
+        window_size = model.data_params["train"]["seq_len"]
     model = VEPModel(model.model)
 
     pred = run_vep(

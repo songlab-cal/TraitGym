@@ -209,11 +209,26 @@ def spearman_score(y_true, y_pred):
     return spearmanr(y_true, y_pred)[0]
 
 
+def odds_ratio_score(y_true, y_pred, threshold_n=30):
+    from scipy.stats import fisher_exact
+    import polars as pl
+
+    df = pl.DataFrame({"label": y_true, "score": -y_pred})
+    negative_set = df.filter(~pl.col("label")).sort("score")
+    threshold = negative_set[threshold_n]["score"]
+    group_counts = (
+        df.group_by(["label", pl.col("score") <= threshold]).len()
+        .sort(["label", "score"])["len"].to_numpy().reshape((2,2))
+    )
+    return fisher_exact(group_counts, alternative='greater')[0]
+
+
 metric_mapping = {
     "AUROC": roc_auc_score,
     "AUPRC": average_precision_score,
     "Accuracy": accuracy_score,
     "Spearman": spearman_score,
+    "OR": odds_ratio_score,
 }
 BLOCKS = [
     "chrom",
