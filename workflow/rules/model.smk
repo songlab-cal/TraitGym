@@ -223,12 +223,27 @@ def odds_ratio_score(y_true, y_pred, threshold_n=30):
     return fisher_exact(group_counts, alternative='greater')[0]
 
 
+def odds_ratio_score_v2(y_true, y_pred, threshold_q=0.05):
+    from scipy.stats import fisher_exact
+    import polars as pl
+
+    df = pl.DataFrame({"label": y_true, "score": -y_pred})
+    threshold = df.select(pl.col("score").quantile(threshold_q))["score"]
+    group_counts = (
+        df.group_by(["label", pl.col("score") <= threshold]).len()
+        .sort(["label", "score"])["len"].to_numpy().reshape((2,2))
+    )
+    return fisher_exact(group_counts, alternative='greater')[0]
+
+
 metric_mapping = {
     "AUROC": roc_auc_score,
     "AUPRC": average_precision_score,
     "Accuracy": accuracy_score,
     "Spearman": spearman_score,
     "OR": odds_ratio_score,
+    "OR_v2": odds_ratio_score_v2,
+    "OR_10%": lambda y_true, y_pred: odds_ratio_score_v2(y_true, y_pred, threshold_q=0.1),
 }
 BLOCKS = [
     "chrom",

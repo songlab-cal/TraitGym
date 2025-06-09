@@ -67,6 +67,8 @@ rule glm_unsupervised:
                 #"AUROC_by_chrom_weighted_average",
                 #"AUPRC",
                 "OR",
+                "OR_v2",
+                "OR_10%",
             ],
             subset=["all"],
             model=[
@@ -84,9 +86,9 @@ rule glm_unsupervised:
             score=[
                 "LLR.minus.score",
                 "absLLR.plus.score",
-                "Embeddings.plus.euclidean_distance",
-                "Embeddings.plus.cosine_distance",
-                "Embeddings.minus.inner_product",
+                #"Embeddings.plus.euclidean_distance",
+                #"Embeddings.plus.cosine_distance",
+                #"Embeddings.minus.inner_product",
             ],
         ),
 
@@ -101,6 +103,8 @@ rule other_unsupervised:
             #    "AUROC_by_chrom_weighted_average",
             #    "AUPRC",
                 "OR",
+                "OR_v2",
+                "OR_10%",
             ],
             subset=["all"],
             model=[
