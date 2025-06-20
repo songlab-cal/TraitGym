@@ -390,19 +390,40 @@ rule process_ensembl_vep:
     output:
         "{anything}.annot.parquet",
     run:
-        V = pd.read_parquet(input[0])
-        V2 = pd.read_csv(
-            input[1], sep="\t", header=None, comment="#",
-            usecols=[0, 6]
-        ).rename(columns={0: "variant", 6: "consequence"})
-        V2["chrom"] = V2.variant.str.split("_").str[0]
-        V2["pos"] = V2.variant.str.split("_").str[1].astype(int)
-        V2["ref"] = V2.variant.str.split("_").str[2].str.split("/").str[0]
-        V2["alt"] = V2.variant.str.split("_").str[2].str.split("/").str[1]
-        V2.drop(columns=["variant"], inplace=True)
-        V = V.merge(V2, on=COORDINATES, how="inner")
+        V = pl.read_parquet(input[0])
+        V2 = pl.read_csv(
+            input[1],
+            separator="\t",
+            has_header=False,
+            comment_prefix="#",
+            new_columns=["variant", "consequence"],
+            columns=[0, 6]
+        )
+        V2 = V2.with_columns(
+            pl.col("variant").str.split("_").list.get(0).alias("chrom"),
+            pl.col("variant").str.split("_").list.get(1).cast(pl.Int64).alias("pos"),
+            pl.col("variant").str.split("_").list.get(2).str.split("/").list.get(0).alias("ref"),
+            pl.col("variant").str.split("_").list.get(2).str.split("/").list.get(1).alias("alt"),
+        ).drop("variant")
+        V = V.join(V2, on=COORDINATES, how="inner")
+        V = V.sort(COORDINATES)
         print(V)
-        V.to_parquet(output[0], index=False)
+        V.write_parquet(output[0])
+
+
+#        V = pd.read_parquet(input[0])
+#        V2 = pd.read_csv(
+#            input[1], sep="\t", header=None, comment="#",
+#            usecols=[0, 6]
+#        ).rename(columns={0: "variant", 6: "consequence"})
+#        V2["chrom"] = V2.variant.str.split("_").str[0]
+#        V2["pos"] = V2.variant.str.split("_").str[1].astype(int)
+#        V2["ref"] = V2.variant.str.split("_").str[2].str.split("/").str[0]
+#        V2["alt"] = V2.variant.str.split("_").str[2].str.split("/").str[1]
+#        V2.drop(columns=["variant"], inplace=True)
+#        V = V.merge(V2, on=COORDINATES, how="inner")
+#        print(V)
+#        V.to_parquet(output[0], index=False)
 
 
 rule cre_annotation:
