@@ -67,3 +67,18 @@ rule simulated_variants:
         V = generate_possible_snvs(seq, chrom)
         print(V)
         V.write_parquet(output[0])
+
+
+rule simulated_variants_consequence:
+    input:
+        "results/simulated/chrom/{chrom}.annot.parquet",
+    output:
+        "results/simulated/consequence/{consequence}/chrom/{chrom}.parquet",
+    wildcard_constraints:
+        chrom="|".join(CHROMS),
+    run:
+        (
+            pl.read_parquet(input[0])
+            .filter(consequence=wildcards.consequence)
+            .write_parquet(output[0])
+        )
