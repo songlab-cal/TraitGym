@@ -554,3 +554,17 @@ rule by_consequence:
                 "evo2_40b_Embeddings.plus.euclidean_distance",
             ],
         ),
+
+
+rule de_novo:
+    input:
+        expand(
+            "results/dataset/{dataset}/features/{features}.parquet",
+            dataset=["de_novo_v1"],
+            features=[
+                "phyloP-100v",
+                "phyloP-241m",
+                "phastCons-43p",
+                "CADD_RawScore",
+            ],
+        )

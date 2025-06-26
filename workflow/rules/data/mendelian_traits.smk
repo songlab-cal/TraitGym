@@ -227,3 +227,57 @@ rule mendelian_dataset_v22:
         V = sort_variants(V)
         print(V)
         V.to_parquet(output[0], index=False)
+
+
+rule dataset_de_novo_v1:
+    input:
+        "results/omim/variants.annot_with_cre.annot_MAF.parquet",
+        "results/simulated/consequence/5_prime_UTR_variant/chrom/21.annot_AF.parquet",
+    output:
+        "results/dataset/de_novo_v1/test.parquet",
+    run:
+        pos = (
+            pl.read_parquet(input[0])
+            .filter(
+                pl.col("consequence") == "5_prime_UTR_variant",
+                pl.col("maf").is_null() # de novo
+            )
+            .with_columns(label=pl.lit(True))
+        )
+        print(pos)
+        print(pos.filter(chrom="21"))
+        neg = (
+            pl.read_parquet(input[1])
+            .filter(pl.col("AF").is_null())
+            .with_columns(label=pl.lit(False))
+        )
+        print(neg)
+        V = pl.concat([pos, neg], how="diagonal_relaxed").unique(COORDINATES, keep="first")
+        print(V)
+        print(V["label"].value_counts())
+        V.write_parquet(output[0])
+
+
+# TODO: maybe generalize this for both CADD and GPN-MSA
+
+# the code below is adapted from https://github.com/songlab-cal/gpn/blob/main/analysis/gpn-msa_human/workflow/rules/cadd.smk
+cadd_base_dir = "/global/scratch/projects/fc_songlab/gbenegas/projects/gpn/analysis/human/results/cadd1.7/"
+
+
+rule run_vep_cadd_in_memory:
+    input:
+        "results/dataset/{dataset}/test.parquet",
+        expand(cadd_base_dir + "chrom/{chrom}.parquet", chrom=CHROMS),
+    output:
+        "results/dataset/{dataset}/features/CADD_RawScore.parquet",
+    threads: workflow.cores
+    run:
+        V = pl.read_parquet(input[0], columns=COORDINATES)
+        preds = pl.concat([
+            pl.read_parquet(path).join(V, on=COORDINATES, how="inner")
+            for path in tqdm(input[1:])
+        ])
+        V = V.join(preds, on=COORDINATES, how="left")
+        V = V.with_columns(-pl.col("score")) # undo the negation
+        print(V)
+        V.select("score").write_parquet(output[0])
