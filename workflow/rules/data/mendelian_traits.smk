@@ -281,3 +281,152 @@ rule run_vep_cadd_in_memory:
         V = V.with_columns(-pl.col("score")) # undo the negation
         print(V)
         V.select("score").write_parquet(output[0])
+
+
+rule download_gpnmsa_all:
+    output:
+        "results/gpnmsa/all.tsv.gz",
+        "results/gpnmsa/all.tsv.gz.tbi",
+    shell:
+        """
+        wget https://huggingface.co/datasets/songlab/gpn-msa-hg38-scores/resolve/main/scores.tsv.bgz -O {output[0]} &&
+        wget https://huggingface.co/datasets/songlab/gpn-msa-hg38-scores/resolve/main/scores.tsv.bgz.tbi -O {output[1]}
+        """
+
+
+rule gpnmsa_extract_chrom:
+    input:
+        "results/gpnmsa/all.tsv.gz",
+    output:
+        temp("results/gpnmsa/chrom/{chrom}.tsv"),
+    wildcard_constraints:
+        chrom="|".join(CHROMS),
+    shell:
+        "tabix {input} {wildcards.chrom} > {output}"
+
+
+rule gpnmsa_process_chrom:
+    input:
+        "results/gpnmsa/chrom/{chrom}.tsv",
+    output:
+        "results/gpnmsa/chrom/{chrom}.parquet",
+    wildcard_constraints:
+        chrom="|".join(CHROMS),
+    run:
+        (
+            pl.read_csv(
+                input[0], has_header=False, separator="\t",
+                new_columns=COORDINATES + ["score"],
+                dtypes={"chrom": str, "score": pl.Float32},
+            )
+            .write_parquet(output[0])
+        )
+
+
+rule run_vep_gpnmsa_in_memory:
+    input:
+        "results/dataset/{dataset}/test.parquet",
+        expand("results/gpnmsa/chrom/{chrom}.parquet", chrom=CHROMS),
+    output:
+        "results/dataset/{dataset}/features/gpnmsa.parquet",
+    threads: workflow.cores
+    run:
+        V = pl.read_parquet(input[0], columns=COORDINATES)
+        preds = pl.concat([
+            pl.read_parquet(path).join(V, on=COORDINATES, how="inner")
+            for path in tqdm(input[1:])
+        ])
+        V = V.join(preds, on=COORDINATES, how="left")
+        V = V.with_columns(-pl.col("score")) # minus LLR
+        print(V)
+        V.select("score").write_parquet(output[0])
+
+
+rule download_hgmd_omim:
+    output:
+        "results/variants/hgmd_omim.parquet",
+    run:
+        V = (
+            pl.read_parquet('hf://datasets/gonzalobenegas/hgmd-omim-gnomad/test.parquet')
+            .filter(pl.col("label"))
+        )
+        print(V)
+        V.write_parquet(output[0])
+
+
+rule dataset_de_novo_v2:
+    input:
+        "results/variants/hgmd_omim.annot_AF.parquet",
+        "results/simulated/consequence/5_prime_UTR_variant/chrom/21.annot_AF.parquet",
+    output:
+        "results/dataset/de_novo_v2/test.parquet",
+    run:
+        pos = (
+            pl.read_parquet(input[0])
+            .filter(
+                pl.col("consequence") == "5_prime_UTR_variant",
+                pl.col("AF").is_null() # de novo
+            )
+            .with_columns(label=pl.lit(True))
+        )
+        print(pos)
+        print(pos.filter(chrom="21"))
+        neg = (
+            pl.read_parquet(input[1])
+            .filter(pl.col("AF").is_null())
+            .with_columns(label=pl.lit(False))
+        )
+        print(neg)
+        V = pl.concat([pos, neg], how="diagonal_relaxed").unique(COORDINATES, keep="first")
+        print(V)
+        print(V["label"].value_counts())
+        V.write_parquet(output[0])
+
+
+de_novo_consequences = [
+    "5_prime_UTR_variant", "3_prime_UTR_variant", "intron_variant",
+    "missense_variant", "synonymous_variant", "stop_gained",
+    "stop_lost", "frameshift_variant", "splice_acceptor_variant",
+    "splice_donor_variant", "splice_region_variant",
+    "non_coding_transcript_exon_variant",
+    "upstream_gene_variant",
+]
+
+rule dataset_de_novo_v3:
+    input:
+        "results/variants/hgmd_omim.annot_AF.parquet",
+        "results/simulated/consequence/{consequence}/chrom/21.annot_AF.parquet",
+    output:
+        "results/dataset/de_novo_v3/{consequence}/{n}/test.parquet",
+    wildcard_constraints:
+        consequence="|".join(de_novo_consequences),
+    run:
+        consequence = wildcards.consequence
+        n = int(wildcards.n)
+        pos = (
+            pl.read_parquet(input[0])
+            .filter(
+                pl.col("consequence") == consequence,
+                pl.col("AF").is_null() # de novo
+            )
+            .with_columns(label=pl.lit(True))
+        )
+        print(pos)
+        print(pos.filter(chrom="21"))
+        neg = (
+            pl.read_parquet(input[1])
+            .filter(pl.col("AF").is_null())
+            .with_columns(label=pl.lit(False))
+        )
+        print(neg)
+        V = pl.concat([pos, neg], how="diagonal_relaxed").unique(COORDINATES, keep="first")
+        print(V)
+        max_n = 9 * V["label"].sum()
+        V = (
+            V.sample(fraction=1.0, shuffle=True, seed=42)
+            .group_by("label", maintain_order=True)
+            .head(max_n)
+        )
+        print(V)
+        print(V["label"].value_counts())
+        V.write_parquet(output[0])
