@@ -9,6 +9,7 @@ include: "rules/data/ldscore.smk"
 include: "rules/data/mendelian_traits.smk"
 include: "rules/data/simulated.smk"
 include: "rules/features/aidodna.smk"
+include: "rules/features/alphagenome.smk"
 include: "rules/features/cadd.smk"
 include: "rules/features/caduceus.smk"
 include: "rules/features/conservation.smk"
@@ -53,7 +54,7 @@ rule all:
                 #"Caduceus_InnerProducts",
                 #"Caduceus_Embeddings",
 
-                "evo2_1b_base",
+                "AlphaGenome",
             ],
         )
 
