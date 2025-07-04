@@ -430,3 +430,64 @@ rule dataset_de_novo_v3:
         print(V)
         print(V["label"].value_counts())
         V.write_parquet(output[0])
+
+
+rule dataset_de_novo_v4:
+    input:
+        "results/variants/hgmd_omim.annot_AF.parquet",
+        "results/cadd/simulated.annot.annot_AF.parquet",
+    output:
+        "results/dataset/de_novo_v4/{k}/test.parquet",
+    run:
+        k = int(wildcards.k)
+        pos = (
+            pl.read_parquet(input[0])
+            .filter(AF=0)  # de novo
+            .with_columns(label=pl.lit(True))
+        )
+        print(pos)
+        neg = (
+            pl.read_parquet(input[1])
+            .filter(AF=0)
+            .with_columns(label=pl.lit(False))
+        )
+        print(neg)
+        # there could be pathogenic variants in the "neg" class, so we filter them out
+        V = pl.concat([pos, neg], how="diagonal_relaxed").unique(COORDINATES, keep="first")
+        print(V)
+        print(V["label"].value_counts())
+        V = V.to_pandas()
+        continuous_features = []
+        categorical_features = ["chrom", "consequence"]
+        V = match_features(V[V.label], V[~V.label], continuous_features, categorical_features, k)
+        V = sort_variants(V)
+        print(V)
+        print(V["label"].value_counts())
+        V.to_parquet(output[0], index=False)
+
+
+rule dataset_de_novo_v4_all:
+    input:
+        "results/variants/hgmd_omim.annot_AF.parquet",
+        "results/cadd/simulated.annot.annot_AF.parquet",
+    output:
+        "results/dataset/de_novo_v4_all/test.parquet",
+    run:
+        pos = (
+            pl.read_parquet(input[0])
+            .filter(AF=0)  # de novo
+            .with_columns(label=pl.lit(True))
+        )
+        neg = (
+            pl.read_parquet(input[1])
+            .filter(AF=0)
+            .with_columns(label=pl.lit(False))
+        )
+        # there could be pathogenic variants in the "neg" class, so we filter them out
+        V = pl.concat([pos, neg], how="diagonal_relaxed").unique(COORDINATES, keep="first")
+        print(V)
+        V = V.filter(pl.col("consequence").is_in(pos["consequence"].unique()))
+        print(V)
+        V = V.to_pandas()
+        V = sort_variants(V)
+        V.to_parquet(output[0], index=False)

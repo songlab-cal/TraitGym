@@ -557,27 +557,36 @@ rule by_consequence:
         ),
 
 
-rule de_novo:
+rule genome_wide_consequences:
     input:
         expand(
             "results/simulated/chrom/{chrom}.annot.parquet",
             chrom=CHROMS,
         ),
-        #expand(
-        #    "results/dataset/{dataset}/features/{features}.parquet",
-        #    dataset=[
-        #        #"de_novo_v1",
-        #        #"de_novo_v2",
-        #        "de_novo_v3/5_prime_UTR_variant/9",
-        #        "de_novo_v3/3_prime_UTR_variant/9",
-        #        "de_novo_v3/upstream_gene_variant/9",
-        #        "de_novo_v3/non_coding_transcript_exon_variant/9",
-        #    ],
-        #    features=[
-        #        "phyloP-100v",
-        #        "phyloP-241m",
-        #        "phastCons-43p",
-        #        "CADD_RawScore",
-        #        "gpnmsa",
-        #    ],
-        #)
+
+
+rule de_novo:
+    input:
+        expand(
+            "results/dataset/{dataset}/features/{features}.parquet",
+            dataset=[
+                #"de_novo_v1",
+                #"de_novo_v2",
+                #"de_novo_v3/5_prime_UTR_variant/9",
+                #"de_novo_v3/3_prime_UTR_variant/9",
+                #"de_novo_v3/upstream_gene_variant/9",
+                #"de_novo_v3/non_coding_transcript_exon_variant/9",
+                "de_novo_v4/9",
+                "de_novo_v4_all",
+            ],
+            features=[
+                #"phyloP-100v",
+                #"phyloP-241m",
+                #"phastCons-43p",
+                "phyloP-100v_noimputation",
+                "phyloP-241m_noimputation",
+                "phastCons-43p_noimputation",
+                "CADD_RawScore",
+                "gpnmsa",
+            ],
+        )

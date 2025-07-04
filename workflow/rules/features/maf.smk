@@ -70,4 +70,5 @@ rule annot_af:
         V = pd.read_parquet(input[0])
         db = gnomAD_DB(input[1], gnomad_version="v3", parallel=True)
         V["AF"] = db.get_info_from_df(V, wildcards.af_col)[wildcards.af_col]
+        V["AF"] = V["AF"].fillna(0)
         V.to_parquet(output[0], index=False)

@@ -39,3 +39,23 @@ rule conservation_features:
         )
         df = df[["score"]].fillna(0)
         df.to_parquet(output[0], index=False)
+
+
+rule conservation_features_noimputation:
+    input:
+        "results/dataset/{dataset}/test.parquet",
+        "results/conservation/{model}.bw",
+    output:
+        "results/dataset/{dataset}/features/{model,phyloP-100v|phyloP-241m|phastCons-43p}_noimputation.parquet",
+    threads: workflow.cores // 6
+    run:
+        import pyBigWig
+
+        df = pd.read_parquet(input[0])
+        bw = pyBigWig.open(input[1])
+        df["score"] = df.progress_apply(
+            lambda v: bw.values(f"chr{v.chrom}", v.pos-1, v.pos)[0],
+            axis=1
+        )
+        df = df[["score"]]
+        df.to_parquet(output[0], index=False)

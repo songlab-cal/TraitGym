@@ -40,6 +40,20 @@ rule cadd_train_process:
         cadd.write_parquet(output[0])
 
 
+rule cadd_simulated:
+    input:
+        "results/cadd/train.parquet",
+    output:
+        "results/cadd/simulated.parquet",
+    run:
+        (
+            pl.read_parquet(input[0])
+            .filter(pl.col("cadd_label"))
+            .drop("cadd_label")
+            .write_parquet(output[0])
+        )
+
+
 #rule dataset_to_vcf:
 #    output:
 #        "results/data/{dataset}.vcf.gz",

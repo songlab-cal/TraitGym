@@ -138,9 +138,9 @@ def check_ref_alt(V, genome):
     return V
 
 
-def match_cols(pos, neg, cols, k=1, prioritize_col=None, minimize_dist_col=None):
-    pos = pos.set_index(cols)
-    neg = neg.set_index(cols)
+def match_features(pos, neg, continuous_features, categorical_features, k):
+    pos = pos.set_index(categorical_features)
+    neg = neg.set_index(categorical_features)
     res_pos = []
     res_neg = []
     for x in tqdm(pos.index.drop_duplicates()):
@@ -153,16 +153,10 @@ def match_cols(pos, neg, cols, k=1, prioritize_col=None, minimize_dist_col=None)
         if len(pos_x) * k > len(neg_x):
             print("WARNING: subsampling positive set")
             pos_x = pos_x.sample(len(neg_x) // k, random_state=42)
-        if prioritize_col is None and minimize_dist_col is None:
+        if len(continuous_features) == 0:
             neg_x = neg_x.sample(len(pos_x) * k, random_state=42)
-        elif minimize_dist_col is not None:
-            assert prioritize_col is None
-            neg_x = find_closest(pos_x, neg_x, minimize_dist_col, k)
-        elif prioritize_col is not None:
-            assert minimize_dist_col is None
-            neg_x = neg_x.sort_values(prioritize_col).head(len(pos_x) * k)
         else:
-            raise ValueError("Shouldn't be here")
+            neg_x = find_closest(pos_x, neg_x, continuous_features, k)
         res_pos.append(pos_x)
         res_neg.append(neg_x)
     res_pos = pd.concat(res_pos, ignore_index=True)
@@ -170,117 +164,17 @@ def match_cols(pos, neg, cols, k=1, prioritize_col=None, minimize_dist_col=None)
     res_neg = pd.concat(res_neg, ignore_index=True)
     res_neg["match_group"] = np.repeat(res_pos.match_group.values, k)
     res = pd.concat([res_pos, res_neg], ignore_index=True)
-    res = sort_variants(res)
     return res
 
 
-def find_closest(pos, neg, col, k):
-    D = cdist(pos[[col]], neg[[col]])
+def find_closest(pos, neg, cols, k):
+    D = cdist(pos[cols], neg[cols])
     closest = []
     for i in range(len(pos)):
         js = np.argsort(D[i])[:k].tolist()
         closest += js
         D[:, js] = np.inf  # ensure they cannot be picked up again
     return neg.iloc[closest]
-
-
-def match_columns(df, target, covariates):
-    all_pos = []
-    all_neg_matched = []
-    for chrom in tqdm(df.chrom.unique()):
-        df_c = df[df.chrom == chrom]
-        pos = df_c[df_c[target]]
-        neg = df_c[~df_c[target]]
-        if len(pos) > len(neg):
-            print("WARNING: subsampling positive set to size of negative set")
-            pos = pos.sample(len(neg), random_state=42)
-        D = cdist(pos[covariates], neg[covariates])
-
-        closest = []
-        for i in range(len(pos)):
-            j = np.argmin(D[i])
-            closest.append(j)
-            D[:, j] = np.inf  # ensure it cannot be picked up again
-        all_pos.append(pos)
-        all_neg_matched.append(neg.iloc[closest])
-    
-    pos = pd.concat(all_pos, ignore_index=True)
-    pos["match_group"] = np.arange(len(pos))
-    neg_matched = pd.concat(all_neg_matched, ignore_index=True)
-    neg_matched["match_group"] = np.arange(len(neg_matched))
-    res = pd.concat([pos, neg_matched], ignore_index=True)
-    res = sort_chrom_pos(res)
-    return res
-
-
-def match_columns_k(df, target, covariates, k):
-    all_pos = []
-    all_neg_matched = []
-    for chrom in tqdm(df.chrom.unique()):
-        df_c = df[df.chrom == chrom]
-        pos = df_c[df_c[target]]
-        neg = df_c[~df_c[target]]
-        
-        if len(pos) * k > len(neg):
-            print("WARNING: subsampling positive set to size of negative set")
-            pos = pos.sample(len(neg) // k, random_state=42)
-
-        if len(covariates) > 0:
-            D = cdist(pos[covariates], neg[covariates])
-            closest = []
-            for i in range(len(pos)):
-                js = np.argsort(D[i])[:k].tolist()
-                closest += js
-                D[:, js] = np.inf  # ensure they cannot be picked up again
-            neg = neg.iloc[closest]
-        else:
-            neg = neg.sample(len(pos) * k, random_state=42)
-
-        all_pos.append(pos)
-        all_neg_matched.append(neg)
-    
-    pos = pd.concat(all_pos, ignore_index=True)
-    pos["match_group"] = np.arange(len(pos))
-    neg_matched = pd.concat(all_neg_matched, ignore_index=True)
-    neg_matched["match_group"] = np.repeat(pos.match_group.values, k)
-    res = pd.concat([pos, neg_matched], ignore_index=True)
-    res = sort_variants(res)
-    return res
-
-
-def match_columns_k_gene(df, target, covariates, k):
-    all_pos = []
-    all_neg_matched = []
-    for gene in tqdm(df[df[target]].gene.unique()):
-        df_c = df[df.gene == gene]
-        pos = df_c[df_c[target]]
-        neg = df_c[~df_c[target]]
-        
-        if len(pos) * k > len(neg):
-            print("WARNING: subsampling positive set to size of negative set")
-            pos = pos.sample(len(neg) // k, random_state=42)
-
-        if len(covariates) > 0:
-            D = cdist(pos[covariates], neg[covariates])
-            closest = []
-            for i in range(len(pos)):
-                js = np.argsort(D[i])[:k].tolist()
-                closest += js
-                D[:, js] = np.inf  # ensure they cannot be picked up again
-            neg = neg.iloc[closest]
-        else:
-            neg = neg.sample(len(pos) * k, random_state=42)
-
-        all_pos.append(pos)
-        all_neg_matched.append(neg)
-    
-    pos = pd.concat(all_pos, ignore_index=True)
-    pos["match_group"] = np.arange(len(pos))
-    neg_matched = pd.concat(all_neg_matched, ignore_index=True)
-    neg_matched["match_group"] = np.repeat(pos.match_group.values, k)
-    res = pd.concat([pos, neg_matched], ignore_index=True)
-    res = sort_variants(res)
-    return res
 
 
 rule download_genome:
