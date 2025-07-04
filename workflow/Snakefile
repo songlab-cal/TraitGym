@@ -54,7 +54,8 @@ rule all:
                 #"Caduceus_InnerProducts",
                 #"Caduceus_Embeddings",
 
-                "AlphaGenome",
+                #"AlphaGenome",
+                "AlphaGenome_v2",
             ],
         )
 
