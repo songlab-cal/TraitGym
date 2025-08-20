@@ -55,7 +55,7 @@ rule all:
                 #"Caduceus_Embeddings",
 
                 #"AlphaGenome",
-                "AlphaGenome_v2",
+                "AlphaGenome_L2",
             ],
         )
 
