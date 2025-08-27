@@ -33,7 +33,9 @@ ODD_EVEN_CHROMS = [
     [str(i) for i in range(1, 23, 2)] + ['X'],
     [str(i) for i in range(2, 23, 2)] + ['Y'],
 ]
-CHROMS = [str(i) for i in range(1, 23)] + ['X', 'Y']
+AUTOSOMES = [str(i) for i in range(1, 23)]
+SEX_CHROMS = ["X", "Y"]
+CHROMS = AUTOSOMES + SEX_CHROMS
 NON_EXONIC = [
     "intergenic_variant",
     "intron_variant",
@@ -283,6 +285,7 @@ rule process_ensembl_vep:
         "{anything}.ensembl_vep.output.tsv.gz",
     output:
         "{anything}.annot.parquet",
+    priority: 100
     run:
         V = pl.read_parquet(input[0])
         V2 = pl.read_csv(
