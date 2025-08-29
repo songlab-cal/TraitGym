@@ -578,8 +578,10 @@ rule de_novo:
                 #"de_novo_v3/3_prime_UTR_variant/9",
                 #"de_novo_v3/upstream_gene_variant/9",
                 #"de_novo_v3/non_coding_transcript_exon_variant/9",
-                "de_novo_v4/9",
-                "de_novo_v4_all",
+                #"de_novo_v4/9",
+                #"de_novo_v4_all",
+                "de_novo_v5/9",
+                "de_novo_v5_all",
             ],
             features=[
                 #"phyloP-100v",

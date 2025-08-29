@@ -56,6 +56,13 @@ rule roulette_sample:
         )
 
 
-rule roulette_all:
+rule roulette_merge:
     input:
         expand("results/roulette/sample/{chrom}.parquet", chrom=AUTOSOMES),
+    output:
+        "results/roulette/merged.parquet",
+    run:
+        (
+            pl.concat([pl.read_parquet(f) for f in input])
+            .write_parquet(output[0])
+        )
