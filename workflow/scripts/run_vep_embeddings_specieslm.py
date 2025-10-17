@@ -33,7 +33,9 @@ def inner_products(embed_ref, embed_alt):
 
 def cosine_distance(embed_ref, embed_alt):
     B = len(embed_ref)
-    return 1 - F.cosine_similarity(embed_ref.reshape(B, -1), embed_alt.reshape(B, -1), dim=1)
+    return 1 - F.cosine_similarity(
+        embed_ref.reshape(B, -1), embed_alt.reshape(B, -1), dim=1
+    )
 
 
 def cosine_distances(embed_ref, embed_alt):
@@ -51,14 +53,17 @@ class ModelforVEPModel(torch.nn.Module):
     def get_scores(self, input_ids_ref, input_ids_alt):
         embed_ref = self.model(input_ids=input_ids_ref).last_hidden_state
         embed_alt = self.model(input_ids=input_ids_alt).last_hidden_state
-        return torch.cat((
-            torch.unsqueeze(euclidean_distance(embed_ref, embed_alt), 1),
-            torch.unsqueeze(inner_product(embed_ref, embed_alt), 1),
-            torch.unsqueeze(cosine_distance(embed_ref, embed_alt), 1),
-            euclidean_distances(embed_ref, embed_alt),
-            inner_products(embed_ref, embed_alt),
-            cosine_distances(embed_ref, embed_alt),
-        ), dim=1)
+        return torch.cat(
+            (
+                torch.unsqueeze(euclidean_distance(embed_ref, embed_alt), 1),
+                torch.unsqueeze(inner_product(embed_ref, embed_alt), 1),
+                torch.unsqueeze(cosine_distance(embed_ref, embed_alt), 1),
+                euclidean_distances(embed_ref, embed_alt),
+                inner_products(embed_ref, embed_alt),
+                cosine_distances(embed_ref, embed_alt),
+            ),
+            dim=1,
+        )
 
     def forward(
         self,
@@ -72,14 +77,14 @@ class ModelforVEPModel(torch.nn.Module):
         return (fwd + rev) / 2
 
 
-def kmers(seq, k=6): #for codons, k = 6
+def kmers(seq, k=6):  # for codons, k = 6
     # splits a sequence into non-overlappnig k-mers
-    return [seq[i:i + k] for i in range(0, len(seq), k) if i + k <= len(seq)]
+    return [seq[i : i + k] for i in range(0, len(seq), k) if i + k <= len(seq)]
 
 
 def kmers_stride1(seq, k=6):
     # splits a sequence into overlapping k-mers
-    return [seq[i:i + k] for i in range(0, len(seq)-k+1)]  
+    return [seq[i : i + k] for i in range(0, len(seq) - k + 1)]
 
 
 def run_vep(
@@ -92,10 +97,7 @@ def run_vep(
     dataloader_num_workers=0,
 ):
     def tokenize(seqs):
-        seqs = [
-            "homo_sapiens " + " ".join(kmers_stride1(seq))
-            for seq in seqs
-        ]
+        seqs = ["homo_sapiens " + " ".join(kmers_stride1(seq)) for seq in seqs]
         return tokenizer(
             seqs,
             padding=False,
@@ -140,8 +142,12 @@ def run_vep(
             )
 
         res = {}
-        res["input_ids_ref_fwd"], res["input_ids_alt_fwd"] = prepare_output(seq_fwd, pos_fwd, ref_fwd, alt_fwd)
-        res["input_ids_ref_rev"], res["input_ids_alt_rev"] = prepare_output(seq_rev, pos_rev, ref_rev, alt_rev)
+        res["input_ids_ref_fwd"], res["input_ids_alt_fwd"] = prepare_output(
+            seq_fwd, pos_fwd, ref_fwd, alt_fwd
+        )
+        res["input_ids_ref_rev"], res["input_ids_alt_rev"] = prepare_output(
+            seq_rev, pos_rev, ref_rev, alt_rev
+        )
         return res
 
     variants.set_transform(get_tokenized_seq)
@@ -150,7 +156,7 @@ def run_vep(
         per_device_eval_batch_size=per_device_batch_size,
         dataloader_num_workers=dataloader_num_workers,
         remove_unused_columns=False,
-        #torch_compile=True,
+        # torch_compile=True,
         fp16=True,
     )
     trainer = Trainer(model=model, args=training_args)

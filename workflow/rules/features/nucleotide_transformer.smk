@@ -1,5 +1,5 @@
 # seems to be running out of memory, will not spend more time on this since it's not a priority
-# torchrun --nproc_per_node=$(echo $CUDA_VISIBLE_DEVICES | awk -F',' '{{print NF}}') 
+# torchrun --nproc_per_node=$(echo $CUDA_VISIBLE_DEVICES | awk -F',' '{{print NF}}')
 
 
 rule nucleotide_transformer_run_vep_llr:
@@ -8,8 +8,7 @@ rule nucleotide_transformer_run_vep_llr:
         "results/genome.fa.gz",
     output:
         "results/dataset/{dataset}/features/NucleotideTransformer_LLR.parquet",
-    threads:
-        workflow.cores
+    threads: workflow.cores
     priority: 20
     shell:
         """
@@ -25,8 +24,7 @@ rule nucleotide_transformer_run_vep_inner_products:
         "results/genome.fa.gz",
     output:
         "results/dataset/{dataset}/features/NucleotideTransformer_InnerProducts.parquet",
-    threads:
-        workflow.cores
+    threads: workflow.cores
     priority: 20
     shell:
         """
@@ -42,8 +40,7 @@ rule nucleotide_transformer_run_vep_embeddings:
         "results/genome.fa.gz",
     output:
         "results/dataset/{dataset}/features/NucleotideTransformer_Embeddings.parquet",
-    threads:
-        workflow.cores
+    threads: workflow.cores
     priority: 20
     shell:
         """

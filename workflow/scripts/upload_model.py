@@ -13,7 +13,9 @@ repo_id = "songlab/TraitGym"
 def upload_file(path):
     if os.path.exists(path):
         api.upload_file(
-            path_or_fileobj=path, path_in_repo=path, repo_id=repo_id,
+            path_or_fileobj=path,
+            path_in_repo=path,
+            repo_id=repo_id,
             repo_type="dataset",
         )
 

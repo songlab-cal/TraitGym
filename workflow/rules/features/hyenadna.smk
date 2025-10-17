@@ -1,4 +1,4 @@
-# torchrun --nproc_per_node=$(echo $CUDA_VISIBLE_DEVICES | awk -F',' '{{print NF}}') 
+# torchrun --nproc_per_node=$(echo $CUDA_VISIBLE_DEVICES | awk -F',' '{{print NF}}')
 
 
 rule hyenadna_run_vep_llr:
@@ -7,8 +7,7 @@ rule hyenadna_run_vep_llr:
         "results/genome.fa.gz",
     output:
         "results/dataset/{dataset}/features/HyenaDNA_LLR.parquet",
-    threads:
-        workflow.cores
+    threads: workflow.cores
     priority: 19
     shell:
         """
@@ -24,8 +23,7 @@ rule hyenadna_run_vep_inner_products:
         "results/genome.fa.gz",
     output:
         "results/dataset/{dataset}/features/HyenaDNA_InnerProducts.parquet",
-    threads:
-        workflow.cores
+    threads: workflow.cores
     priority: 19
     shell:
         """
@@ -41,8 +39,7 @@ rule hyenadna_run_vep_embeddings:
         "results/genome.fa.gz",
     output:
         "results/dataset/{dataset}/features/HyenaDNA_Embeddings.parquet",
-    threads:
-        workflow.cores
+    threads: workflow.cores
     priority: 19
     shell:
         """

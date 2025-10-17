@@ -27,15 +27,16 @@ rule run_vep_enformer:
     output:
         "results/dataset/{dataset}/features/Enformer_L2.parquet",
     priority: 101
-    threads:
-        workflow.cores
+    threads: workflow.cores
     shell:
         """
         python \
         workflow/scripts/vep_enformer_borzoi.py {input} enformer human {output} \
         --per_device_batch_size {config[enformer][batch_size]} --dataloader_num_workers {threads} --is_file
         """
-#torchrun --nproc_per_node $(echo $CUDA_VISIBLE_DEVICES | awk -F',' '{{print NF}}') \
+
+
+# torchrun --nproc_per_node $(echo $CUDA_VISIBLE_DEVICES | awk -F',' '{{print NF}}') \
 
 
 rule run_vep_borzoi:
@@ -44,8 +45,7 @@ rule run_vep_borzoi:
         "results/genome.fa.gz",
     output:
         "results/dataset/{dataset}/features/Borzoi_L2.parquet",
-    threads:
-        workflow.cores
+    threads: workflow.cores
     priority: 100
     shell:
         """
@@ -95,12 +95,14 @@ rule grelu_aggregate_assay:
         elif wildcards.norm_ord == "inf":
             norm_ord = np.inf
         for assay in assays:
-            df_assay = df[metadata[metadata.assay==assay].name] if assay != "all" else df
+            df_assay = (
+                df[metadata[metadata.assay == assay].name] if assay != "all" else df
+            )
             df[assay] = np.linalg.norm(df_assay, axis=1, ord=norm_ord)
         df[assays].to_parquet(output[0], index=False)
 
 
-#rule grelu_features:
+# rule grelu_features:
 #    output:
 #        "results/features/{dataset}/{model,Enformer|Borzoi}_L2.parquet",
 #    threads:
@@ -135,7 +137,7 @@ rule grelu_aggregate_assay:
 #
 #        lfc = grelu.variant.predict_variant_effects(
 #            variants=V.loc[V.within_bounds, COORDINATES],
-#            model=model, 
+#            model=model,
 #            devices=list(range(torch.cuda.device_count())),
 #            num_workers=threads,
 #            batch_size=8,

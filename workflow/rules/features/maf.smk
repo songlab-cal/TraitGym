@@ -1,6 +1,6 @@
 # possible columns:
 # https://github.com/KalinNonchev/gnomAD_DB/blob/master/gnomad_db/pkgdata/gnomad_columns.yaml
-# e.g. 
+# e.g.
 # - AF # Alternate allele frequency in samples
 # - AF_eas # Alternate allele frequency in samples of East Asian ancestry
 # - AF_nfe # Alternate allele frequency in XY samples of Non-Finnish European ancestry
@@ -26,8 +26,7 @@ rule maf_features:
         "results/gnomad_db",
     output:
         "results/dataset/{dataset}/features/M{af_col}.parquet",
-    threads:
-        workflow.cores
+    threads: workflow.cores
     run:
         from gnomad_db.database import gnomAD_DB
 
@@ -44,8 +43,7 @@ rule annot_maf:
         "results/gnomad_db",
     output:
         "{anything}.annot_M{af_col}.parquet",
-    threads:
-        workflow.cores
+    threads: workflow.cores
     run:
         from gnomad_db.database import gnomAD_DB
 
@@ -62,8 +60,7 @@ rule annot_af:
         "results/gnomad_db",
     output:
         "{anything}.annot_{af_col,AF}.parquet",
-    threads:
-        workflow.cores
+    threads: workflow.cores
     run:
         from gnomad_db.database import gnomAD_DB
 

@@ -3,8 +3,7 @@ rule gpn_msa_run_vep_llr:
         "results/dataset/{dataset}/test.parquet",
     output:
         "results/dataset/{dataset}/features/GPN-MSA_LLR.parquet",
-    threads:
-        workflow.cores
+    threads: workflow.cores
     priority: 103
     shell:
         """
@@ -15,7 +14,7 @@ rule gpn_msa_run_vep_llr:
         """
 
 
-#rule gpn_msa_run_vep_inner_products:
+# rule gpn_msa_run_vep_inner_products:
 #    input:
 #        "results/dataset/{dataset}/test.parquet",
 #    output:
@@ -37,8 +36,7 @@ rule gpn_msa_run_vep_influence:
         "results/dataset/{dataset}/test.parquet",
     output:
         "results/dataset/{dataset}/features/GPN-MSA_Influence.parquet",
-    threads:
-        workflow.cores
+    threads: workflow.cores
     shell:
         """
         python \
@@ -53,8 +51,7 @@ rule gpn_msa_run_vep_ref_embed:
         "results/dataset/{dataset}/test.parquet",
     output:
         "results/dataset/{dataset}/features/GPN-MSA_RefEmbed.parquet",
-    threads:
-        workflow.cores
+    threads: workflow.cores
     shell:
         """
         python \
@@ -69,8 +66,7 @@ rule gpn_msa_run_vep_delta_embed:
         "results/dataset/{dataset}/test.parquet",
     output:
         "results/dataset/{dataset}/features/GPN-MSA_DeltaEmbed.parquet",
-    threads:
-        workflow.cores
+    threads: workflow.cores
     shell:
         """
         python \
@@ -85,8 +81,7 @@ rule gpn_msa_run_vep_euclidean_distance:
         "results/dataset/{dataset}/test.parquet",
     output:
         "results/dataset/{dataset}/features/GPN-MSA_EuclideanDistance.parquet",
-    threads:
-        workflow.cores
+    threads: workflow.cores
     priority: 103
     shell:
         """
@@ -102,8 +97,7 @@ rule gpn_msa_run_vep_embeddings:
         "results/dataset/{dataset}/test.parquet",
     output:
         "results/dataset/{dataset}/features/GPN-MSA_Embeddings.parquet",
-    threads:
-        workflow.cores
+    threads: workflow.cores
     priority: 103
     shell:
         """

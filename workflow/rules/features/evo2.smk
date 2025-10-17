@@ -4,7 +4,7 @@ n_shards = 6
 shards = np.arange(n_shards)
 
 
-#rule evo2_run_vep:
+# rule evo2_run_vep:
 #    input:
 #        "results/dataset/{dataset}/test.parquet",
 #        "results/genome.fa.gz",
@@ -32,7 +32,7 @@ rule evo2_merge_shards:
     input:
         expand(
             "results/dataset/{{dataset}}/features/shard/{shard}/evo2_40b.parquet",
-            shard=shards
+            shard=shards,
         ),
     output:
         "results/dataset/{dataset}/features/evo2_40b.parquet",
@@ -96,20 +96,18 @@ rule make_probs_wig:
         V = V.with_columns(
             pl.DataFrame(softmax(V.select(NUCLEOTIDES), axis=1), schema=NUCLEOTIDES)
         )
-        V = (
-            V.with_columns(
-                entropy=entropy(V.select(NUCLEOTIDES), base=2, axis=1)
-            )
-            .with_columns(
-                (pl.col(NUCLEOTIDES) * (2 - pl.col("entropy")))
-            )
-        )
+        V = V.with_columns(
+            entropy=entropy(V.select(NUCLEOTIDES), base=2, axis=1)
+        ).with_columns((pl.col(NUCLEOTIDES) * (2 - pl.col("entropy"))))
         for nuc, path in zip(NUCLEOTIDES, output):
-            with open(path, 'w') as f:
+            with open(path, "w") as f:
                 f.write(f"variableStep chrom=chr{chrom}\n")
-            with open(path, 'ab') as f:
+            with open(path, "ab") as f:
                 V.select(["pos", nuc]).write_csv(
-                    f, separator="\t", include_header=False, float_precision=2,
+                    f,
+                    separator="\t",
+                    include_header=False,
+                    float_precision=2,
                 )
 
 
@@ -122,7 +120,10 @@ rule make_chrom_sizes:
         intervals = Genome(input[0], subset_chroms=CHROMS).get_all_intervals()
         intervals.chrom = "chr" + intervals.chrom
         intervals.to_csv(
-            output[0], sep="\t", index=False, header=False,
+            output[0],
+            sep="\t",
+            index=False,
+            header=False,
             columns=["chrom", "end"],
         )
 

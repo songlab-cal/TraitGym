@@ -21,18 +21,17 @@ rule roulette_process:
 
         rows = []
         for variant in VCF(input[0]):
-            rows.append([
-                variant.CHROM,
-                variant.POS,
-                variant.REF,
-                variant.ALT[0],
-                variant.FILTER,
-                variant.INFO.get("MR"),
-            ])
-        V = pd.DataFrame(
-            rows,
-            columns=["chrom", "pos", "ref", "alt", "FILTER", "MR"]
-        )
+            rows.append(
+                [
+                    variant.CHROM,
+                    variant.POS,
+                    variant.REF,
+                    variant.ALT[0],
+                    variant.FILTER,
+                    variant.INFO.get("MR"),
+                ]
+            )
+        V = pd.DataFrame(rows, columns=["chrom", "pos", "ref", "alt", "FILTER", "MR"])
         V.to_parquet(output[0], index=False)
 
 
@@ -43,8 +42,7 @@ rule roulette_sample:
         "results/roulette/sample/{chrom}.parquet",
     wildcard_constraints:
         chrom="|".join(AUTOSOMES),
-    threads:
-        workflow.cores
+    threads: workflow.cores
     run:
         filter_out = ["low", "SFS_bump"]
         (
@@ -62,7 +60,4 @@ rule roulette_merge:
     output:
         "results/roulette/merged.parquet",
     run:
-        (
-            pl.concat([pl.read_parquet(f) for f in input])
-            .write_parquet(output[0])
-        )
+        (pl.concat([pl.read_parquet(f) for f in input]).write_parquet(output[0]))

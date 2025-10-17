@@ -38,10 +38,13 @@ rule ldscore_process:
     run:
         V = (
             pl.read_csv(
-                input[0], separator="\t", columns=["locus", "alleles", "AF", "ld_score"],
+                input[0],
+                separator="\t",
+                columns=["locus", "alleles", "AF", "ld_score"],
             )
             .with_columns(
-                pl.col("locus").str.split_exact(":", 1)
+                pl.col("locus")
+                .str.split_exact(":", 1)
                 .struct.rename_fields(["chrom", "pos"]),
                 pl.col("alleles")
                 .str.replace("[", "", literal=True)
@@ -52,7 +55,7 @@ rule ldscore_process:
                 pl.when(pl.col("AF") < 0.5)
                 .then(pl.col("AF"))
                 .otherwise(1 - pl.col("AF"))
-                .alias("maf")
+                .alias("maf"),
             )
             .with_columns(
                 pl.col("locus").struct.field("chrom"),
@@ -85,9 +88,8 @@ rule ldscore_feature:
         "results/dataset/{dataset}/features/LDScore.parquet",
     run:
         V = pd.read_parquet(input[0])
-        ldscore = (
-            pd.read_parquet(input[1], columns=COORDINATES + ["ld_score"])
-            .rename(columns={"ld_score": "score"})
+        ldscore = pd.read_parquet(input[1], columns=COORDINATES + ["ld_score"]).rename(
+            columns={"ld_score": "score"}
         )
         V = V.merge(ldscore, on=COORDINATES, how="left")
         print(f"{V.score.isna().sum()=}")

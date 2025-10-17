@@ -14,9 +14,9 @@ from transformers import AutoTokenizer, AutoModelForMaskedLM, Trainer, TrainingA
 from gpn.data import Genome, load_dataset_from_file_or_dir, token_input_id
 
 from modelgenerator.huggingface_models.rnabert import (
-    RNABertTokenizer, 
-    RNABertModel, 
-    RNABertForMaskedLM, 
+    RNABertTokenizer,
+    RNABertModel,
+    RNABertForMaskedLM,
 )
 
 
@@ -127,7 +127,7 @@ def run_vep(
         per_device_eval_batch_size=per_device_batch_size,
         dataloader_num_workers=dataloader_num_workers,
         remove_unused_columns=False,
-        #torch_compile=True,
+        # torch_compile=True,
         bf16=True,
         bf16_full_eval=True,
     )
@@ -189,8 +189,8 @@ if __name__ == "__main__":
     )
     genome = Genome(args.genome_path)
     tokenizer = RNABertTokenizer(
-        "/accounts/projects/yss/gbenegas/projects/ModelGenerator/" +
-        "modelgenerator/huggingface_models/rnabert/vocab.txt"
+        "/accounts/projects/yss/gbenegas/projects/ModelGenerator/"
+        + "modelgenerator/huggingface_models/rnabert/vocab.txt"
     )
     model = MLMforVEPModel(args.model_path)
     pred = run_vep(

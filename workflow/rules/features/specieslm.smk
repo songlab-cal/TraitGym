@@ -4,8 +4,7 @@ rule specieslm_run_vep_llr:
         "results/genome.fa.gz",
     output:
         "results/dataset/{dataset}/features/SpeciesLM_LLR.parquet",
-    threads:
-        workflow.cores
+    threads: workflow.cores
     priority: 20
     shell:
         """
@@ -22,8 +21,7 @@ rule specieslm_run_vep_embeddings:
         "results/genome.fa.gz",
     output:
         "results/dataset/{dataset}/features/SpeciesLM_Embeddings.parquet",
-    threads:
-        workflow.cores
+    threads: workflow.cores
     priority: 20
     shell:
         """

@@ -4,12 +4,10 @@ rule gnomad_download:
     run:
         (
             pl.read_parquet(
-                'hf://datasets/songlab/gnomad/test.parquet',
+                "hf://datasets/songlab/gnomad/test.parquet",
                 columns=COORDINATES + ["label", "consequence"],
             )
-            .with_columns(
-                pl.col("consequence") + "_variant"
-            )
+            .with_columns(pl.col("consequence") + "_variant")
             .write_parquet(output[0])
         )
 

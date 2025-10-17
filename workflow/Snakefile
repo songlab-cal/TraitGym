@@ -1,5 +1,6 @@
 configfile: "config/config.yaml"
 
+
 include: "rules/common.smk"
 include: "rules/data/clinvar.smk"
 include: "rules/data/complex_traits.smk"
@@ -34,31 +35,26 @@ rule all:
             "results/dataset/{dataset}/features/{features}.parquet",
             dataset=config["datasets"],
             features=[
-                #"Enformer_L2",
-                #"Borzoi_L2",
-                #"CADD",
-                #"GPN-MSA_LLR",
-                #"GPN-MSA_InnerProducts",
-                #"GPN-MSA_Embeddings",
-
-                #"NucleotideTransformer_LLR",
-                #"NucleotideTransformer_InnerProducts",
-
-                #"GPN_final_LLR",
-                #"GPN_final_Embeddings",
-                #"GPN_final_InnerProducts",
-
-                #"HyenaDNA_LLR",
-                #"HyenaDNA_InnerProducts",
-
-                #"Caduceus_LLR",
-                #"Caduceus_InnerProducts",
-                #"Caduceus_Embeddings",
-
-                #"AlphaGenome",
+                # "Enformer_L2",
+                # "Borzoi_L2",
+                # "CADD",
+                # "GPN-MSA_LLR",
+                # "GPN-MSA_InnerProducts",
+                # "GPN-MSA_Embeddings",
+                # "NucleotideTransformer_LLR",
+                # "NucleotideTransformer_InnerProducts",
+                # "GPN_final_LLR",
+                # "GPN_final_Embeddings",
+                # "GPN_final_InnerProducts",
+                # "HyenaDNA_LLR",
+                # "HyenaDNA_InnerProducts",
+                # "Caduceus_LLR",
+                # "Caduceus_InnerProducts",
+                # "Caduceus_Embeddings",
+                # "AlphaGenome",
                 "AlphaGenome_L2",
             ],
-        )
+        ),
 
 
 rule glm_unsupervised:
@@ -67,32 +63,32 @@ rule glm_unsupervised:
             "results/dataset/{dataset}/{metric}/{subset}/{model}_{score}.csv",
             dataset=config["datasets"],
             metric=[
-                #"AUPRC_by_chrom_weighted_average",
-                #"AUROC_by_chrom_weighted_average",
-                #"AUPRC",
+                # "AUPRC_by_chrom_weighted_average",
+                # "AUROC_by_chrom_weighted_average",
+                # "AUPRC",
                 "OR",
                 "OR_v2",
                 "OR_10%",
             ],
             subset=["all"],
             model=[
-                #"GPN_final",
-                #"NucleotideTransformer",
-                #"HyenaDNA",
-                #"Caduceus",
+                # "GPN_final",
+                # "NucleotideTransformer",
+                # "HyenaDNA",
+                # "Caduceus",
                 "GPN-MSA",
-                #"SpeciesLM",
-                #"AIDO.DNA",
-                #"evo2_1b_base",
-                #"evo2_7b",
+                # "SpeciesLM",
+                # "AIDO.DNA",
+                # "evo2_1b_base",
+                # "evo2_7b",
                 "evo2_40b",
             ],
             score=[
                 "LLR.minus.score",
                 "absLLR.plus.score",
-                #"Embeddings.plus.euclidean_distance",
-                #"Embeddings.plus.cosine_distance",
-                #"Embeddings.minus.inner_product",
+                # "Embeddings.plus.euclidean_distance",
+                # "Embeddings.plus.cosine_distance",
+                # "Embeddings.minus.inner_product",
             ],
         ),
 
@@ -103,9 +99,9 @@ rule other_unsupervised:
             "results/dataset/{dataset}/{metric}/{subset}/{model}.csv",
             dataset=config["datasets"],
             metric=[
-            #    "AUPRC_by_chrom_weighted_average",
-            #    "AUROC_by_chrom_weighted_average",
-            #    "AUPRC",
+                #    "AUPRC_by_chrom_weighted_average",
+                #    "AUROC_by_chrom_weighted_average",
+                #    "AUPRC",
                 "OR",
                 "OR_v2",
                 "OR_10%",
@@ -134,28 +130,28 @@ rule general_supervised:
             ],
             subset=["all"],
             feature_set=[
-                #"CADD",
-                #"Enformer",
-                #"Borzoi",
-                #"GPN-MSA",
-                #"GPN_final",
-                #"NucleotideTransformer",
-                #"HyenaDNA",
-                #"Caduceus",
-                #"Sei",
-                #"SpeciesLM",
-                #"AIDO.DNA",
-                #"evo2_1b_base",
-                #"evo2_7b",
+                # "CADD",
+                # "Enformer",
+                # "Borzoi",
+                # "GPN-MSA",
+                # "GPN_final",
+                # "NucleotideTransformer",
+                # "HyenaDNA",
+                # "Caduceus",
+                # "Sei",
+                # "SpeciesLM",
+                # "AIDO.DNA",
+                # "evo2_1b_base",
+                # "evo2_7b",
                 "evo2_40b",
-                #"CADD+GPN-MSA",
-                #"CADD+Borzoi",
-                #"GPN-MSA+Borzoi",
-                #"CADD+GPN-MSA+Borzoi",
+                # "CADD+GPN-MSA",
+                # "CADD+Borzoi",
+                # "GPN-MSA+Borzoi",
+                # "CADD+GPN-MSA+Borzoi",
             ],
             classifier=[
                 "LogisticRegression",
-            ]
+            ],
         ),
         #expand(
         #    "results/dataset/{dataset}/metrics_by_chrom_weighted_average/{subset}/{feature_set}.{classifier}.chrom.subset_from_all.csv",
@@ -199,7 +195,7 @@ rule select_mendelian_traits:
             ],
             classifier=[
                 "LogisticRegression",
-            ]
+            ],
         ),
 
 
@@ -209,9 +205,9 @@ rule select_complex_traits:
             "results/dataset/{dataset}/metrics_by_chrom_weighted_average/{subset}/{model}.csv",
             dataset=["complex_traits_matched_9"],
             subset=(
-                select_gwas_traits +
-                config["consequence_subsets"] +
-                ["disease", "non_disease"]
+                select_gwas_traits
+                + config["consequence_subsets"]
+                + ["disease", "non_disease"]
             ),
             model=[
                 "CADD.plus.RawScore",
@@ -314,7 +310,7 @@ rule ensemble_light:
             ],
             classifier=[
                 "LogisticRegression",
-            ]
+            ],
         ),
 
 
@@ -350,31 +346,27 @@ rule no_cadd_overlap:
             metric=["AUPRC_by_chrom_weighted_average"],
             subset=["no_cadd_overlap"],
             model=[
-                #"CADD.plus.RawScore",
-                #"Borzoi_L2_L2.plus.all",
-                #"Enformer_L2_L2.plus.all",
-                #"GPN-MSA_LLR.minus.score",
-                #"GPN-MSA_absLLR.plus.score",
-                #"GPN_final_LLR.minus.score",
-                #"GPN_final_Embeddings.plus.euclidean_distance",
-                #"Sei.plus.seqclass_max_absdiff",
-                #"NucleotideTransformer_Embeddings.plus.euclidean_distance",
-                #"NucleotideTransformer_Embeddings.minus.inner_product",
-                #"HyenaDNA_Embeddings.minus.inner_product",
-                #"Caduceus_Embeddings.plus.euclidean_distance",
-                #"Caduceus_Embeddings.minus.inner_product",
+                # "CADD.plus.RawScore",
+                # "Borzoi_L2_L2.plus.all",
+                # "Enformer_L2_L2.plus.all",
+                # "GPN-MSA_LLR.minus.score",
+                # "GPN-MSA_absLLR.plus.score",
+                # "GPN_final_LLR.minus.score",
+                # "GPN_final_Embeddings.plus.euclidean_distance",
+                # "Sei.plus.seqclass_max_absdiff",
+                # "NucleotideTransformer_Embeddings.plus.euclidean_distance",
+                # "NucleotideTransformer_Embeddings.minus.inner_product",
+                # "HyenaDNA_Embeddings.minus.inner_product",
+                # "Caduceus_Embeddings.plus.euclidean_distance",
+                # "Caduceus_Embeddings.minus.inner_product",
                 "SpeciesLM_Embeddings.plus.euclidean_distance",
                 "AIDO.DNA_Embeddings.minus.inner_product",
-
                 "evo2_1b_base_Embeddings.plus.euclidean_distance",
                 "evo2_1b_base_Embeddings.minus.inner_product",
-
                 "evo2_7b_LLR.minus.score",
                 "evo2_7b_Embeddings.plus.euclidean_distance",
-
                 "evo2_40b_LLR.minus.score",
                 "evo2_40b_absLLR.plus.score",
-
                 "phyloP-100v.plus.score",
                 "phyloP-241m.plus.score",
                 "phastCons-43p.plus.score",
@@ -386,15 +378,15 @@ rule no_cadd_overlap:
             metric=["AUPRC_by_chrom_weighted_average"],
             subset=["no_cadd_overlap"],
             feature_set=[
-                #"CADD",
-                #"Borzoi",
-                #"Enformer",
-                #"GPN-MSA",
-                #"GPN_final",
-                #"Sei",
-                #"NucleotideTransformer",
-                #"HyenaDNA",
-                #"Caduceus",
+                # "CADD",
+                # "Borzoi",
+                # "Enformer",
+                # "GPN-MSA",
+                # "GPN_final",
+                # "Sei",
+                # "NucleotideTransformer",
+                # "HyenaDNA",
+                # "Caduceus",
                 "SpeciesLM",
                 "AIDO.DNA",
                 "evo2_1b_base",
@@ -403,7 +395,7 @@ rule no_cadd_overlap:
             ],
             classifier=[
                 "LogisticRegression",
-            ]
+            ],
         ),
 
 
@@ -433,7 +425,7 @@ rule eqtl_overlap:
             ],
             classifier=[
                 "LogisticRegression",
-            ]
+            ],
         ),
 
 
@@ -543,15 +535,12 @@ rule by_consequence:
                 "GPN_final_LLR.minus.score",
                 "GPN_final_absLLR.plus.score",
                 "GPN_final_Embeddings.plus.euclidean_distance",
-
                 "evo2_1b_base_LLR.minus.score",
                 "evo2_1b_base_absLLR.plus.score",
                 "evo2_1b_base_Embeddings.plus.euclidean_distance",
-
                 "evo2_7b_LLR.minus.score",
                 "evo2_7b_absLLR.plus.score",
                 "evo2_7b_Embeddings.plus.euclidean_distance",
-
                 "evo2_40b_LLR.minus.score",
                 "evo2_40b_absLLR.plus.score",
                 "evo2_40b_Embeddings.plus.euclidean_distance",
@@ -572,25 +561,25 @@ rule de_novo:
         expand(
             "results/dataset/{dataset}/features/{features}.parquet",
             dataset=[
-                #"de_novo_v1",
-                #"de_novo_v2",
-                #"de_novo_v3/5_prime_UTR_variant/9",
-                #"de_novo_v3/3_prime_UTR_variant/9",
-                #"de_novo_v3/upstream_gene_variant/9",
-                #"de_novo_v3/non_coding_transcript_exon_variant/9",
-                #"de_novo_v4/9",
-                #"de_novo_v4_all",
+                # "de_novo_v1",
+                # "de_novo_v2",
+                # "de_novo_v3/5_prime_UTR_variant/9",
+                # "de_novo_v3/3_prime_UTR_variant/9",
+                # "de_novo_v3/upstream_gene_variant/9",
+                # "de_novo_v3/non_coding_transcript_exon_variant/9",
+                # "de_novo_v4/9",
+                # "de_novo_v4_all",
                 "de_novo_v5/9",
                 "de_novo_v5_all",
             ],
             features=[
-                #"phyloP-100v",
-                #"phyloP-241m",
-                #"phastCons-43p",
+                # "phyloP-100v",
+                # "phyloP-241m",
+                # "phastCons-43p",
                 "phyloP-100v_noimputation",
                 "phyloP-241m_noimputation",
                 "phastCons-43p_noimputation",
                 "CADD_RawScore",
                 "gpnmsa",
             ],
-        )
+        ),

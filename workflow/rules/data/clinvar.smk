@@ -21,10 +21,13 @@ rule clinvar_process:
 
         rows = []
         for variant in VCF(input[0]):
-            if variant.INFO.get("CLNVC") != "single_nucleotide_variant": continue
-            if len(variant.ALT) != 1: continue
+            if variant.INFO.get("CLNVC") != "single_nucleotide_variant":
+                continue
+            if len(variant.ALT) != 1:
+                continue
             cln_sig = variant.INFO.get("CLNSIG")
-            if cln_sig != "Pathogenic": continue
+            if cln_sig != "Pathogenic":
+                continue
             review_status = variant.INFO.get("CLNREVSTAT")
             if review_status not in ["reviewed_by_expert_panel", "practice_guideline"]:
                 continue

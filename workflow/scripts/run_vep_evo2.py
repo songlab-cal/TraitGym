@@ -33,7 +33,9 @@ def inner_products(embed_ref, embed_alt):
 
 def cosine_distance(embed_ref, embed_alt):
     B = len(embed_ref)
-    return 1 - F.cosine_similarity(embed_ref.reshape(B, -1), embed_alt.reshape(B, -1), dim=1)
+    return 1 - F.cosine_similarity(
+        embed_ref.reshape(B, -1), embed_alt.reshape(B, -1), dim=1
+    )
 
 
 def cosine_distances(embed_ref, embed_alt):
@@ -58,15 +60,18 @@ class VEPWrapper(torch.nn.Module):
         ll_ref, embed_ref = self.get_ll_and_embed(input_ids_ref)
         ll_alt, embed_alt = self.get_ll_and_embed(input_ids_alt)
         llr = ll_alt - ll_ref
-        return torch.cat((
-            torch.unsqueeze(llr, 1),
-            torch.unsqueeze(euclidean_distance(embed_ref, embed_alt), 1),
-            torch.unsqueeze(inner_product(embed_ref, embed_alt), 1),
-            torch.unsqueeze(cosine_distance(embed_ref, embed_alt), 1),
-            euclidean_distances(embed_ref, embed_alt),
-            inner_products(embed_ref, embed_alt),
-            cosine_distances(embed_ref, embed_alt),
-        ), dim=1)
+        return torch.cat(
+            (
+                torch.unsqueeze(llr, 1),
+                torch.unsqueeze(euclidean_distance(embed_ref, embed_alt), 1),
+                torch.unsqueeze(inner_product(embed_ref, embed_alt), 1),
+                torch.unsqueeze(cosine_distance(embed_ref, embed_alt), 1),
+                euclidean_distances(embed_ref, embed_alt),
+                inner_products(embed_ref, embed_alt),
+                cosine_distances(embed_ref, embed_alt),
+            ),
+            dim=1,
+        )
 
     def forward(
         self,
@@ -81,23 +86,28 @@ class VEPWrapper(torch.nn.Module):
 
 
 def run_vep(
-    variants, genome, tokenizer, model, window_size,
-    per_device_batch_size=8, dataloader_num_workers=0,
+    variants,
+    genome,
+    tokenizer,
+    model,
+    window_size,
+    per_device_batch_size=8,
+    dataloader_num_workers=0,
 ):
     def tokenize(seqs):
         return tokenizer.tokenize_batch(seqs)
 
     def get_tokenized_seq(vs):
-        # we convert from 1-based coordinate (standard in VCF) to 
+        # we convert from 1-based coordinate (standard in VCF) to
         # 0-based, to use with Genome
         chrom = np.array(vs["chrom"])
         n = len(chrom)
         pos = np.array(vs["pos"]) - 1
         start = pos - window_size // 2
         end = pos + window_size // 2
-        seq_fwd, seq_rev = zip(*(
-            genome.get_seq_fwd_rev(chrom[i], start[i], end[i]) for i in range(n)
-        ))
+        seq_fwd, seq_rev = zip(
+            *(genome.get_seq_fwd_rev(chrom[i], start[i], end[i]) for i in range(n))
+        )
         seq_fwd = np.array([list(seq.upper()) for seq in seq_fwd], dtype="object")
         seq_rev = np.array([list(seq.upper()) for seq in seq_rev], dtype="object")
         assert seq_fwd.shape[1] == window_size
@@ -134,8 +144,8 @@ def run_vep(
         per_device_eval_batch_size=per_device_batch_size,
         dataloader_num_workers=dataloader_num_workers,
         remove_unused_columns=False,
-        #torch_compile=True,
-        #bf16=True, bf16_full_eval=True,
+        # torch_compile=True,
+        # bf16=True, bf16_full_eval=True,
     )
     trainer = Trainer(model=model, args=training_args)
     return trainer.predict(test_dataset=variants).predictions
@@ -146,16 +156,17 @@ if __name__ == "__main__":
         description="Run zero-shot variant effect prediction with AutoModelForMaskedLM"
     )
     parser.add_argument(
-        "variants_path", type=str,
+        "variants_path",
+        type=str,
         help="Variants path. Needs the following columns: chrom,pos,ref,alt. pos should be 1-based",
     )
     parser.add_argument(
-        "genome_path", type=str, help="Genome path (fasta, potentially compressed)",
+        "genome_path",
+        type=str,
+        help="Genome path (fasta, potentially compressed)",
     )
     parser.add_argument("window_size", type=int, help="Genomic window size")
-    parser.add_argument(
-        "model_path", help="Model path (local or on HF hub)", type=str
-    )
+    parser.add_argument("model_path", help="Model path (local or on HF hub)", type=str)
     parser.add_argument("output_path", help="Output path (parquet)", type=str)
     parser.add_argument(
         "--per_device_batch_size",
@@ -164,22 +175,30 @@ if __name__ == "__main__":
         default=8,
     )
     parser.add_argument(
-        "--tokenizer_path", type=str,
+        "--tokenizer_path",
+        type=str,
         help="Tokenizer path (optional, else will use model_path)",
     )
     parser.add_argument(
         "--dataloader_num_workers", type=int, default=0, help="Dataloader num workers"
     )
     parser.add_argument(
-        "--split", type=str, default="test", help="Dataset split",
+        "--split",
+        type=str,
+        default="test",
+        help="Dataset split",
     )
     parser.add_argument(
-        "--is_file", action="store_true", help="VARIANTS_PATH is a file, not directory",
+        "--is_file",
+        action="store_true",
+        help="VARIANTS_PATH is a file, not directory",
     )
     args = parser.parse_args()
 
     variants = load_dataset_from_file_or_dir(
-        args.variants_path, split=args.split, is_file=args.is_file,
+        args.variants_path,
+        split=args.split,
+        is_file=args.is_file,
     )
     subset_chroms = np.unique(variants["chrom"])
     genome = Genome(args.genome_path, subset_chroms=subset_chroms)
@@ -189,7 +208,11 @@ if __name__ == "__main__":
     tokenizer = evo2.tokenizer
     model = VEPWrapper(evo2)
     pred = run_vep(
-        variants, genome, tokenizer, model, args.window_size,
+        variants,
+        genome,
+        tokenizer,
+        model,
+        args.window_size,
         per_device_batch_size=args.per_device_batch_size,
         dataloader_num_workers=args.dataloader_num_workers,
     )

@@ -15,9 +15,9 @@ from gpn.data import Genome, load_dataset_from_file_or_dir
 
 
 from modelgenerator.huggingface_models.rnabert import (
-    RNABertTokenizer, 
-    RNABertModel, 
-    RNABertForMaskedLM, 
+    RNABertTokenizer,
+    RNABertModel,
+    RNABertForMaskedLM,
 )
 
 
@@ -40,7 +40,9 @@ def inner_products(embed_ref, embed_alt):
 
 def cosine_distance(embed_ref, embed_alt):
     B = len(embed_ref)
-    return 1 - F.cosine_similarity(embed_ref.reshape(B, -1), embed_alt.reshape(B, -1), dim=1)
+    return 1 - F.cosine_similarity(
+        embed_ref.reshape(B, -1), embed_alt.reshape(B, -1), dim=1
+    )
 
 
 def cosine_distances(embed_ref, embed_alt):
@@ -57,14 +59,17 @@ class ModelforVEPModel(torch.nn.Module):
     def get_scores(self, input_ids_ref, input_ids_alt):
         embed_ref = self.model(input_ids=input_ids_ref).last_hidden_state
         embed_alt = self.model(input_ids=input_ids_alt).last_hidden_state
-        return torch.cat((
-            torch.unsqueeze(euclidean_distance(embed_ref, embed_alt), 1),
-            torch.unsqueeze(inner_product(embed_ref, embed_alt), 1),
-            torch.unsqueeze(cosine_distance(embed_ref, embed_alt), 1),
-            euclidean_distances(embed_ref, embed_alt),
-            inner_products(embed_ref, embed_alt),
-            cosine_distances(embed_ref, embed_alt),
-        ), dim=1)
+        return torch.cat(
+            (
+                torch.unsqueeze(euclidean_distance(embed_ref, embed_alt), 1),
+                torch.unsqueeze(inner_product(embed_ref, embed_alt), 1),
+                torch.unsqueeze(cosine_distance(embed_ref, embed_alt), 1),
+                euclidean_distances(embed_ref, embed_alt),
+                inner_products(embed_ref, embed_alt),
+                cosine_distances(embed_ref, embed_alt),
+            ),
+            dim=1,
+        )
 
     def forward(
         self,
@@ -132,8 +137,12 @@ def run_vep(
             )
 
         res = {}
-        res["input_ids_ref_fwd"], res["input_ids_alt_fwd"] = prepare_output(seq_fwd, pos_fwd, ref_fwd, alt_fwd)
-        res["input_ids_ref_rev"], res["input_ids_alt_rev"] = prepare_output(seq_rev, pos_rev, ref_rev, alt_rev)
+        res["input_ids_ref_fwd"], res["input_ids_alt_fwd"] = prepare_output(
+            seq_fwd, pos_fwd, ref_fwd, alt_fwd
+        )
+        res["input_ids_ref_rev"], res["input_ids_alt_rev"] = prepare_output(
+            seq_rev, pos_rev, ref_rev, alt_rev
+        )
         return res
 
     variants.set_transform(get_tokenized_seq)
@@ -142,7 +151,7 @@ def run_vep(
         per_device_eval_batch_size=per_device_batch_size,
         dataloader_num_workers=dataloader_num_workers,
         remove_unused_columns=False,
-        #torch_compile=True,
+        # torch_compile=True,
         bf16=True,
         bf16_full_eval=True,
     )
@@ -204,8 +213,8 @@ if __name__ == "__main__":
     )
     genome = Genome(args.genome_path)
     tokenizer = RNABertTokenizer(
-        "/accounts/projects/yss/gbenegas/projects/ModelGenerator/" +
-        "modelgenerator/huggingface_models/rnabert/vocab.txt"
+        "/accounts/projects/yss/gbenegas/projects/ModelGenerator/"
+        + "modelgenerator/huggingface_models/rnabert/vocab.txt"
     )
     model = ModelforVEPModel(args.model_path)
     pred = run_vep(

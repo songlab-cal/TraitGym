@@ -14,20 +14,20 @@ def run_vep(
 ):
     model = dna_client.create(os.environ.get("ALPHA_GENOME_API_KEY"))
     metadata = model.output_metadata()
-    sequence_length = '1MB'
+    sequence_length = "1MB"
     sequence_length = dna_client.SUPPORTED_SEQUENCE_LENGTHS[
-        f'SEQUENCE_LENGTH_{sequence_length}'
+        f"SEQUENCE_LENGTH_{sequence_length}"
     ]
     organism = dna_client.Organism.HOMO_SAPIENS
 
     tracks = [
-        'ATAC',
-        'DNASE',
-        'CHIP_TF',
-        'CHIP_HISTONE',
-        'CAGE',
-        'PROCAP',
-        'RNA_SEQ',
+        "ATAC",
+        "DNASE",
+        "CHIP_TF",
+        "CHIP_HISTONE",
+        "CAGE",
+        "PROCAP",
+        "RNA_SEQ",
     ]
     scorers = [
         variant_scorers.CenterMaskScorer(
@@ -52,7 +52,7 @@ def run_vep(
         interval_fwd.strand = "+"
         interval_rev = interval.copy()
         interval_rev.strand = "-"
-  
+
         def my_score_interval(interval):
             variant_scores = model.score_variant(
                 interval=interval,
@@ -64,18 +64,24 @@ def run_vep(
 
         res_fwd = my_score_interval(interval_fwd)
         res_rev = my_score_interval(interval_rev)
-        assert (res_fwd.index == res_rev.index).all() and (res_fwd.columns == res_rev.columns).all()
+        assert (res_fwd.index == res_rev.index).all() and (
+            res_fwd.columns == res_rev.columns
+        ).all()
         res = res_fwd
         res.raw_score = (res.raw_score + res_rev.raw_score) / 2
         res["variant_scorer"] = res.variant_scorer.map(reverse_map)
-        res["track"] = res["variant_scorer"] + "-" + res.groupby("variant_scorer").cumcount().astype(str)
+        res["track"] = (
+            res["variant_scorer"]
+            + "-"
+            + res.groupby("variant_scorer").cumcount().astype(str)
+        )
         res = res.set_index("track")[["raw_score"]].T
         return res
 
     rows_iterable = V.itertuples(index=False)
 
     # simple version
-    #res = list(tqdm(map(run_vep_variant, rows_iterable), total=len(V)))
+    # res = list(tqdm(map(run_vep_variant, rows_iterable), total=len(V)))
 
     # parallel version (watch out for API limits)
     with concurrent.futures.ThreadPoolExecutor(max_workers=num_workers) as executor:
@@ -86,9 +92,7 @@ def run_vep(
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(
-        description="Variant effect prediction"
-    )
+    parser = argparse.ArgumentParser(description="Variant effect prediction")
     parser.add_argument(
         "variants_path",
         type=str,
@@ -96,7 +100,9 @@ if __name__ == "__main__":
     )
     parser.add_argument("output_path", help="Output path (parquet)", type=str)
     parser.add_argument(
-        "--num_workers", type=int, default=0,
+        "--num_workers",
+        type=int,
+        default=0,
     )
     args = parser.parse_args()
 
@@ -104,7 +110,7 @@ if __name__ == "__main__":
     V.chrom = "chr" + V.chrom
 
     pred = run_vep(V, num_workers=args.num_workers)
-    
+
     directory = os.path.dirname(args.output_path)
     if directory != "" and not os.path.exists(directory):
         os.makedirs(directory)

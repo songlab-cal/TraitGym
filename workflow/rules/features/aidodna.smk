@@ -4,8 +4,7 @@ rule aidodna_run_vep_llr:
         "results/genome.fa.gz",
     output:
         "results/dataset/{dataset}/features/AIDO.DNA_LLR.parquet",
-    threads:
-        workflow.cores
+    threads: workflow.cores
     priority: 20
     shell:
         """
@@ -23,8 +22,7 @@ rule aidodna_run_vep_embeddings:
         "results/genome.fa.gz",
     output:
         "results/dataset/{dataset}/features/AIDO.DNA_Embeddings.parquet",
-    threads:
-        workflow.cores
+    threads: workflow.cores
     priority: 20
     shell:
         """

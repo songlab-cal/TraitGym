@@ -29,10 +29,14 @@ seq_rev = str(Seq(seq_fwd).reverse_complement())
 
 
 def get_logits(seq):
-    input_ids = torch.tensor(
-        model.tokenizer.tokenize(seq),
-        dtype=torch.int,
-    ).unsqueeze(0).to('cuda:0')
+    input_ids = (
+        torch.tensor(
+            model.tokenizer.tokenize(seq),
+            dtype=torch.int,
+        )
+        .unsqueeze(0)
+        .to("cuda:0")
+    )
 
     with torch.inference_mode():
         (logits, _), _ = model(input_ids)
@@ -50,7 +54,7 @@ logits = (logits_fwd + logits_rev) / 2
 
 logits = pd.DataFrame(logits, columns=nucleotides)
 logits["chrom"] = chrom
-logits["pos"] = [x+1 for x in range(start+1, end-1)]  # 1-based
+logits["pos"] = [x + 1 for x in range(start + 1, end - 1)]  # 1-based
 logits["ref"] = list(seq_fwd[1:-1])
 print(logits)
 logits.to_parquet(output_path, index=False)

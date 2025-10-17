@@ -19,37 +19,35 @@ def generate_possible_snvs(seq: str, chrom: str) -> pl.DataFrame:
            - 'alt': The alternative (variant) base.
     """
     # Create a DataFrame from the input DNA sequence.
-    df = pl.DataFrame({'ref': list(seq)})
+    df = pl.DataFrame({"ref": list(seq)})
 
     # Add a 'pos' column with the 1-based position using the modern API.
-    df = df.with_row_index('pos', offset=1)
+    df = df.with_row_index("pos", offset=1)
 
     # Define the mapping from each reference base to its possible alternatives.
-    valid_bases = {'A', 'C', 'G', 'T'}
+    valid_bases = {"A", "C", "G", "T"}
     alt_map = {
-        'A': ['C', 'G', 'T'],
-        'C': ['A', 'G', 'T'],
-        'G': ['A', 'C', 'T'],
-        'T': ['A', 'C', 'G']
+        "A": ["C", "G", "T"],
+        "C": ["A", "G", "T"],
+        "G": ["A", "C", "T"],
+        "T": ["A", "C", "G"],
     }
 
     # Filter the DataFrame to include only rows with valid DNA bases.
-    df = df.filter(pl.col('ref').is_in(list(valid_bases)))
+    df = df.filter(pl.col("ref").is_in(list(valid_bases)))
 
     # Use the recommended 'replace_strict' for fast, native mapping.
     # This is the efficient and correct replacement for this pattern.
-    df = df.with_columns(
-        pl.col('ref').replace_strict(alt_map).alias('alt')
-    )
+    df = df.with_columns(pl.col("ref").replace_strict(alt_map).alias("alt"))
 
     # "Explode" the 'alt' column to give each SNV its own row.
-    df = df.explode('alt')
+    df = df.explode("alt")
 
     # Add the constant 'chrom' column.
-    df = df.with_columns(pl.lit(chrom).alias('chrom'))
+    df = df.with_columns(pl.lit(chrom).alias("chrom"))
 
     # Select and reorder columns to the final format.
-    V = df.select(['chrom', 'pos', 'ref', 'alt'])
+    V = df.select(["chrom", "pos", "ref", "alt"])
 
     return V
 

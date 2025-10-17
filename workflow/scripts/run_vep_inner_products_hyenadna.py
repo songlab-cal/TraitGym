@@ -16,11 +16,11 @@ from gpn.data import Genome, load_dataset_from_file_or_dir, token_input_id
 
 
 max_lengths = {
-    'LongSafari/hyenadna-tiny-1k-seqlen-hf': 1024,
-    'LongSafari/hyenadna-small-32k-seqlen-hf': 32768,
-    'LongSafari/hyenadna-medium-160k-seqlen-hf': 160000,
-    'LongSafari/hyenadna-medium-450k-seqlen-hf': 450000,
-    'LongSafari/hyenadna-large-1m-seqlen-hf': 1_000_000,
+    "LongSafari/hyenadna-tiny-1k-seqlen-hf": 1024,
+    "LongSafari/hyenadna-small-32k-seqlen-hf": 32768,
+    "LongSafari/hyenadna-medium-160k-seqlen-hf": 160000,
+    "LongSafari/hyenadna-medium-450k-seqlen-hf": 450000,
+    "LongSafari/hyenadna-large-1m-seqlen-hf": 1_000_000,
 }
 
 
@@ -28,7 +28,8 @@ class VEPEmbedding(torch.nn.Module):
     def __init__(self, model_path):
         super().__init__()
         self.model = AutoModel.from_pretrained(
-            model_path, trust_remote_code=True,
+            model_path,
+            trust_remote_code=True,
         )
 
     def get_embedding(self, input_ids):
@@ -38,7 +39,7 @@ class VEPEmbedding(torch.nn.Module):
     def get_scores(self, input_ids_ref, input_ids_alt):
         embedding_ref = self.get_embedding(input_ids_ref)
         embedding_alt = self.get_embedding(input_ids_alt)
-        return (embedding_ref * embedding_alt)
+        return embedding_ref * embedding_alt
 
     def forward(
         self,
@@ -53,8 +54,13 @@ class VEPEmbedding(torch.nn.Module):
 
 
 def run_vep(
-    variants, genome, tokenizer, model, window_size,
-    per_device_batch_size=8, dataloader_num_workers=0,
+    variants,
+    genome,
+    tokenizer,
+    model,
+    window_size,
+    per_device_batch_size=8,
+    dataloader_num_workers=0,
 ):
     def tokenize(seqs):
         return tokenizer(
@@ -67,16 +73,16 @@ def run_vep(
         )["input_ids"]
 
     def get_tokenized_seq(vs):
-        # we convert from 1-based coordinate (standard in VCF) to 
+        # we convert from 1-based coordinate (standard in VCF) to
         # 0-based, to use with Genome
         chrom = np.array(vs["chrom"])
         n = len(chrom)
         pos = np.array(vs["pos"]) - 1
         start = pos - window_size // 2
         end = pos + window_size // 2
-        seq_fwd, seq_rev = zip(*(
-            genome.get_seq_fwd_rev(chrom[i], start[i], end[i]) for i in range(n)
-        ))
+        seq_fwd, seq_rev = zip(
+            *(genome.get_seq_fwd_rev(chrom[i], start[i], end[i]) for i in range(n))
+        )
         seq_fwd = np.array([list(seq.upper()) for seq in seq_fwd], dtype="object")
         seq_rev = np.array([list(seq.upper()) for seq in seq_rev], dtype="object")
         assert seq_fwd.shape[1] == window_size
@@ -114,7 +120,8 @@ def run_vep(
         dataloader_num_workers=dataloader_num_workers,
         remove_unused_columns=False,
         torch_compile=True,
-        bf16=True, bf16_full_eval=True,
+        bf16=True,
+        bf16_full_eval=True,
     )
     trainer = Trainer(model=model, args=training_args)
     return trainer.predict(test_dataset=variants).predictions
@@ -125,15 +132,16 @@ if __name__ == "__main__":
         description="Run zero-shot variant effect prediction with AutoModelForMaskedLM"
     )
     parser.add_argument(
-        "variants_path", type=str,
+        "variants_path",
+        type=str,
         help="Variants path. Needs the following columns: chrom,pos,ref,alt. pos should be 1-based",
     )
     parser.add_argument(
-        "genome_path", type=str, help="Genome path (fasta, potentially compressed)",
+        "genome_path",
+        type=str,
+        help="Genome path (fasta, potentially compressed)",
     )
-    parser.add_argument(
-        "model_path", help="Model path (local or on HF hub)", type=str
-    )
+    parser.add_argument("model_path", help="Model path (local or on HF hub)", type=str)
     parser.add_argument("output_path", help="Output path (parquet)", type=str)
     parser.add_argument(
         "--per_device_batch_size",
@@ -142,22 +150,30 @@ if __name__ == "__main__":
         default=8,
     )
     parser.add_argument(
-        "--tokenizer_path", type=str,
+        "--tokenizer_path",
+        type=str,
         help="Tokenizer path (optional, else will use model_path)",
     )
     parser.add_argument(
         "--dataloader_num_workers", type=int, default=0, help="Dataloader num workers"
     )
     parser.add_argument(
-        "--split", type=str, default="test", help="Dataset split",
+        "--split",
+        type=str,
+        default="test",
+        help="Dataset split",
     )
     parser.add_argument(
-        "--is_file", action="store_true", help="VARIANTS_PATH is a file, not directory",
+        "--is_file",
+        action="store_true",
+        help="VARIANTS_PATH is a file, not directory",
     )
     args = parser.parse_args()
 
     variants = load_dataset_from_file_or_dir(
-        args.variants_path, split=args.split, is_file=args.is_file,
+        args.variants_path,
+        split=args.split,
+        is_file=args.is_file,
     )
     subset_chroms = np.unique(variants["chrom"])
     genome = Genome(args.genome_path, subset_chroms=subset_chroms)
@@ -167,7 +183,11 @@ if __name__ == "__main__":
     )
     model = VEPEmbedding(args.model_path)
     pred = run_vep(
-        variants, genome, tokenizer, model, max_lengths[args.model_path],
+        variants,
+        genome,
+        tokenizer,
+        model,
+        max_lengths[args.model_path],
         per_device_batch_size=args.per_device_batch_size,
         dataloader_num_workers=args.dataloader_num_workers,
     )
