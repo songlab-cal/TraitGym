@@ -16,6 +16,7 @@ dependencies = [
     "huggingface_hub",
     "liftover",
     "gpn @ git+https://github.com/songlab-cal/gpn.git",
+    "cyvcf2>=0.31.4",
 ]
 
 [project.urls]

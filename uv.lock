@@ -318,6 +318,18 @@ wheels = [
 ]
 
 [[package]]
+name = "coloredlogs"
+version = "15.0.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "humanfriendly" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/cc/c7/eed8f27100517e8c0e6b923d5f0845d0cb99763da6fdee00478f91db7325/coloredlogs-15.0.1.tar.gz", hash = "sha256:7c991aa71a4577af2f82600d8f8f3a89f936baeaf9b50a9c197da014e5bf16b0", size = 278520, upload-time = "2021-06-11T10:22:45.202Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/a7/06/3d6badcf13db419e25b07041d9c7b4a2c331d3f4e7134445ec5df57714cd/coloredlogs-15.0.1-py2.py3-none-any.whl", hash = "sha256:612ee75c546f53e92e70049c9dbfcc18c935a2b9a53b66085ce9ef6a6e5c0934", size = 46018, upload-time = "2021-06-11T10:22:42.561Z" },
+]
+
+[[package]]
 name = "conda-inject"
 version = "1.3.2"
 source = { registry = "https://pypi.org/simple" }
@@ -470,6 +482,37 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/a9/95/a3dbbb5028f35eafb79008e7522a75244477d2838f38cbb722248dabc2a8/cycler-0.12.1.tar.gz", hash = "sha256:88bb128f02ba341da8ef447245a9e138fae777f6a23943da4540077d3601eb1c", size = 7615, upload-time = "2023-10-07T05:32:18.335Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/e7/05/c19819d5e3d95294a6f5947fb9b9629efb316b96de511b418c53d245aae6/cycler-0.12.1-py3-none-any.whl", hash = "sha256:85cef7cff222d8644161529808465972e51340599459b8ac3ccbac5a854e0d30", size = 8321, upload-time = "2023-10-07T05:32:16.783Z" },
+]
+
+[[package]]
+name = "cyvcf2"
+version = "0.31.4"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "click" },
+    { name = "coloredlogs" },
+    { name = "numpy" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/26/72/5f99e6d2ed239a2ad6d6c26c6726a4db11050e52d66ceb2262cf806a835f/cyvcf2-0.31.4.tar.gz", hash = "sha256:42f0c296b1f9a995c0240a1e33033d67ae728d6753ac129fdf90bddd5befaf57", size = 1331901, upload-time = "2025-10-13T17:47:16.536Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/15/ae/f4e1eecb0747c6beda646b55206d190bbd82fccece5c789ca8ce83f1651a/cyvcf2-0.31.4-cp312-cp312-macosx_10_13_x86_64.whl", hash = "sha256:fe67f02f1c2890dd793c901d984bc5e1887f5509fccdaf6e7676dde02e476449", size = 1384556, upload-time = "2025-10-13T17:46:34.687Z" },
+    { url = "https://files.pythonhosted.org/packages/0b/2d/3be5fbfcb29e0fc340168d866e53b14aabbf06ff194e68357097eea013e7/cyvcf2-0.31.4-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:f704db67aaa951185d5dfe7723ef93af1164802d42936e0d8dd687aacc6018ef", size = 1319288, upload-time = "2025-10-13T17:46:35.686Z" },
+    { url = "https://files.pythonhosted.org/packages/66/cd/1b1162b2fae62116ee0fd18f603320b0b44706be5d3e0c932d87fefda95e/cyvcf2-0.31.4-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.whl", hash = "sha256:fab3fdf48eadadd88411e10d6427b2a71b5090cfad1ebb149556673cbb8ec99a", size = 6836244, upload-time = "2025-10-13T17:46:36.732Z" },
+    { url = "https://files.pythonhosted.org/packages/58/05/0ef0e879f4a5cc1e6d02997e776692fa064001859c3c07ab66a708afe16b/cyvcf2-0.31.4-cp312-cp312-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:f6c890d2aabc85f25eb90cebc6337cd0e9b457dc16a724eb9522799707f5cae3", size = 7165130, upload-time = "2025-10-13T17:46:38.306Z" },
+    { url = "https://files.pythonhosted.org/packages/3d/9b/393c8ddafa3305b92b30877a9148a2e658c6b2e3396d99a507a85d58b7dc/cyvcf2-0.31.4-cp312-cp312-musllinux_1_2_aarch64.whl", hash = "sha256:62a6ba6e96e2717c00b2691c69883fd557afa950a6849998c442e427ad9c5edd", size = 7473643, upload-time = "2025-10-13T17:46:39.595Z" },
+    { url = "https://files.pythonhosted.org/packages/d6/49/b69ab705fd4eed52a2593b9d918ea670af0c813463fd5da88add09dcae37/cyvcf2-0.31.4-cp312-cp312-musllinux_1_2_x86_64.whl", hash = "sha256:99ffb8b505c98f15a98bce978270a4efff6e147154c6dc5c5c023081b09aeb6c", size = 7315878, upload-time = "2025-10-13T17:46:41.248Z" },
+    { url = "https://files.pythonhosted.org/packages/aa/e4/b701f15f3bbd415c6b17bef759a503e76fea8d208e8ff37c3d51a942eb40/cyvcf2-0.31.4-cp313-cp313-macosx_10_13_x86_64.whl", hash = "sha256:46c8c310216e3b2ee1758c93c7d2a9657ece832afd319e21580c0a6846d6ff8b", size = 1382242, upload-time = "2025-10-13T17:46:42.398Z" },
+    { url = "https://files.pythonhosted.org/packages/37/ee/913e1db68e5da785af186996aa0a03a0a327845bad974b233b9c325914b9/cyvcf2-0.31.4-cp313-cp313-macosx_11_0_arm64.whl", hash = "sha256:38b7be922756b5e78a1972477e5f865d15b1abef774224c4d6421bab29e2b757", size = 1317889, upload-time = "2025-10-13T17:46:44.029Z" },
+    { url = "https://files.pythonhosted.org/packages/85/9b/589ecb7297765a903cdc4ca48685911abba35a19c0ed98e9f69d7b24094f/cyvcf2-0.31.4-cp313-cp313-manylinux2014_x86_64.manylinux_2_17_x86_64.whl", hash = "sha256:4d885c2789fa8b41b9292f880a189fce7917aeeecfd4ea9cd0a9678946385a9c", size = 6825830, upload-time = "2025-10-13T17:46:45.314Z" },
+    { url = "https://files.pythonhosted.org/packages/99/d4/e611c2d9cb56ae779b04cc534e88042123659177daa91c17db04fee8d49a/cyvcf2-0.31.4-cp313-cp313-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:bb4621b3be737230f52bb63fe03e94a578928c6488b8ab070cb1b516193b659b", size = 7163199, upload-time = "2025-10-13T17:46:46.896Z" },
+    { url = "https://files.pythonhosted.org/packages/73/35/092282658e58b38cdf1bb6756f1a7ad83f9b6b6dbe34821104962328a4b7/cyvcf2-0.31.4-cp313-cp313-musllinux_1_2_aarch64.whl", hash = "sha256:8ad1f0216572e3be343a0d4af01ad415bce6412e0a9f62359967c450bf261307", size = 7472880, upload-time = "2025-10-13T17:46:48.161Z" },
+    { url = "https://files.pythonhosted.org/packages/e5/58/1c1b3c78d4d5dc3b3cbfd53c1a9ce92e542a36d2bda582ce1a57e0ccbf18/cyvcf2-0.31.4-cp313-cp313-musllinux_1_2_x86_64.whl", hash = "sha256:af462b25bf73b98f9d9419d6e42bf0676cada1967eaa32865e1044557512abd1", size = 7308917, upload-time = "2025-10-13T17:46:49.546Z" },
+    { url = "https://files.pythonhosted.org/packages/94/08/81dafd8ef48f11d0d01907de86eb1e8b9b6e9a088429f67069c92db4823d/cyvcf2-0.31.4-cp314-cp314-macosx_10_13_x86_64.whl", hash = "sha256:c707344ecb1c802fe1872162409224065886d5999db7cda67e42dd9b1e9caca8", size = 1381303, upload-time = "2025-10-13T17:46:50.862Z" },
+    { url = "https://files.pythonhosted.org/packages/e6/75/d6fb23c91a22289640cc6a59dbafc947bfa8cbdb553cd456f3aec7624b4e/cyvcf2-0.31.4-cp314-cp314-macosx_11_0_arm64.whl", hash = "sha256:c968bd546d0ada1c9c35c1b7e2a4ff8e846fa657660d921064f7fde7ccc0045e", size = 1319026, upload-time = "2025-10-13T17:46:52.167Z" },
+    { url = "https://files.pythonhosted.org/packages/7b/1c/6a3674eab08de0923122192873eecd3919796921e13d703cadedba5abf3a/cyvcf2-0.31.4-cp314-cp314-manylinux2014_x86_64.manylinux_2_17_x86_64.whl", hash = "sha256:666244dd5849753cb0d6b53ac9fc2b070263fc0bbcf44e4cfc51f4232022a316", size = 6797551, upload-time = "2025-10-13T17:46:53.218Z" },
+    { url = "https://files.pythonhosted.org/packages/95/c1/0313d3d3615d032b6f73120ee35cd5de55800c024eac54726ea0fe20ba87/cyvcf2-0.31.4-cp314-cp314-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:a97da556f5d383b6984d70069f960cdc4855ddcbfc1ace48892d67aee7608d29", size = 7158378, upload-time = "2025-10-13T17:46:54.726Z" },
+    { url = "https://files.pythonhosted.org/packages/49/ef/666b045762fb58e1868ca7d84c2e52e1126e7882171565e535e2191e073c/cyvcf2-0.31.4-cp314-cp314-musllinux_1_2_aarch64.whl", hash = "sha256:37488f5d2e15c02618f0d133da4f4e4e19412ed9160f925166fc50735cc82b35", size = 7475287, upload-time = "2025-10-13T17:46:56.879Z" },
+    { url = "https://files.pythonhosted.org/packages/58/64/24d5a7bce7ed742b013576a1acf8a4d5007d1328ab7322a14644e69dd432/cyvcf2-0.31.4-cp314-cp314-musllinux_1_2_x86_64.whl", hash = "sha256:a6d3db9e7d8598b91be8be27e11ce87af0ece0e5a9890c8470483e67bd2ba6d1", size = 7292474, upload-time = "2025-10-13T17:46:58.074Z" },
 ]
 
 [[package]]
@@ -2756,6 +2799,7 @@ name = "traitgym"
 version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
+    { name = "cyvcf2" },
     { name = "gpn" },
     { name = "huggingface-hub" },
     { name = "liftover" },
@@ -2773,6 +2817,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
+    { name = "cyvcf2", specifier = ">=0.31.4" },
     { name = "gpn", git = "https://github.com/songlab-cal/gpn.git" },
     { name = "huggingface-hub" },
     { name = "liftover" },

@@ -1,4 +1,5 @@
 import bioframe as bf
+from cyvcf2 import VCF
 from datasets import load_dataset
 from gpn.data import Genome, load_table, load_dataset_from_file_or_dir
 from liftover import get_lifter
@@ -33,9 +34,7 @@ ODD_EVEN_CHROMS = [
     [str(i) for i in range(1, 23, 2)] + ["X"],
     [str(i) for i in range(2, 23, 2)] + ["Y"],
 ]
-AUTOSOMES = [str(i) for i in range(1, 23)]
-SEX_CHROMS = ["X", "Y"]
-CHROMS = AUTOSOMES + SEX_CHROMS
+CHROMS = [str(i) for i in range(1, 23)]
 NON_EXONIC = [
     "intergenic_variant",
     "intron_variant",
@@ -78,18 +77,15 @@ select_omim_traits = (
 tissues = pd.read_csv("config/gtex_tissues.txt", header=None).values.ravel()
 
 
-def filter_chroms(V):
-    V = V[V.chrom.isin(CHROMS)]
-    return V
+def filter_snp(V: pd.DataFrame) -> pd.DataFrame:
+    return V[V.ref.isin(NUCLEOTIDES) & V.alt.isin(NUCLEOTIDES)]
 
 
-def filter_snp(V):
-    V = V[V.ref.isin(NUCLEOTIDES)]
-    V = V[V.alt.isin(NUCLEOTIDES)]
-    return V
+def filter_chroms(V: pd.DataFrame) -> pd.DataFrame:
+    return V[V.chrom.isin(CHROMS)]
 
 
-def lift_hg19_to_hg38(V):
+def lift_hg19_to_hg38(V: pd.DataFrame) -> pd.DataFrame:
     converter = get_lifter("hg19", "hg38")
 
     def get_new_pos(v):

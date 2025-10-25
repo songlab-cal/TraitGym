@@ -2,7 +2,7 @@ rule roulette_download:
     output:
         "results/roulette/{chrom}.vcf.gz",
     wildcard_constraints:
-        chrom="|".join(AUTOSOMES),
+        chrom="|".join(CHROMS),
     threads: workflow.cores // 4
     shell:
         "wget http://genetics.bwh.harvard.edu/downloads/Vova/Roulette/{wildcards.chrom}_rate_v5.2_TFBS_correction_all.vcf.gz -O {output}"
@@ -14,7 +14,7 @@ rule roulette_process:
     output:
         "results/roulette/{chrom}.parquet",
     wildcard_constraints:
-        chrom="|".join(AUTOSOMES),
+        chrom="|".join(CHROMS),
     threads: workflow.cores
     run:
         from cyvcf2 import VCF
@@ -41,7 +41,7 @@ rule roulette_sample:
     output:
         "results/roulette/sample/{chrom}.parquet",
     wildcard_constraints:
-        chrom="|".join(AUTOSOMES),
+        chrom="|".join(CHROMS),
     threads: workflow.cores
     run:
         filter_out = ["low", "SFS_bump"]
@@ -56,7 +56,7 @@ rule roulette_sample:
 
 rule roulette_merge:
     input:
-        expand("results/roulette/sample/{chrom}.parquet", chrom=AUTOSOMES),
+        expand("results/roulette/sample/{chrom}.parquet", chrom=CHROMS),
     output:
         "results/roulette/merged.parquet",
     run:
