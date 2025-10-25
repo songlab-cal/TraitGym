@@ -7,7 +7,7 @@
 - Load a dataset
     ```python
     from datasets import load_dataset
-    
+
     dataset = load_dataset("songlab/TraitGym", "mendelian_traits", split="test")
     ```
 - Example notebook to run variant effect prediction with a gLM, runs in 5 min on Google Colab: `TraitGym.ipynb` [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/songlab-cal/TraitGym/blob/main/TraitGym.ipynb)
@@ -50,17 +50,37 @@
 - GPN-Promoter code is in [the main GPN repo](https://github.com/songlab-cal/gpn)
 
 ### Installation
-First, clone the repo and `cd` into it.  
+First, clone the repo and `cd` into it.
 Second, install the dependencies:
 ```bash
-conda env create -f workflow/envs/general.yaml
-conda activate TraitGym
+uv sync
+source .venv/bin/activate
+```
+
+For development (includes pre-commit hooks):
+```bash
+uv sync --group dev
 ```
 Optionally, download precomputed datasets and predictions (6.7G):
 ```bash
 mkdir -p results/dataset
-huggingface-cli download songlab/TraitGym --repo-type dataset --local-dir results/dataset/
+hf download songlab/TraitGym --repo-type dataset --local-dir results/dataset/
 ```
+
+### Code Formatting
+This project uses pre-commit hooks for automatic code formatting and linting.
+
+To set up:
+```bash
+pre-commit install
+```
+
+To manually run all hooks:
+```bash
+pre-commit run --all-files
+```
+
+The hooks will automatically run on every commit for changed files.
 
 ### Running
 To compute a specific result, specify its path:
@@ -82,7 +102,7 @@ snakemake --cores all <path> --touch
 # to output an execution plan
 snakemake --cores all <path> --dry-run
 ```
-To evaluate your own set of model features, place a dataframe of shape `n_variants,n_features` in `results/dataset/{dataset}/features/{features}.parquet`.  
+To evaluate your own set of model features, place a dataframe of shape `n_variants,n_features` in `results/dataset/{dataset}/features/{features}.parquet`.
 For zero-shot evaluation of column `{feature}` and sign `{sign}` (`plus` or `minus`), you would invoke:
 ```bash
 snakemake --cores all results/dataset/{dataset}/{metric}/all/{features}.{sign}.{feature}.csv

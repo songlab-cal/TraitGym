@@ -1,0 +1,30 @@
+[project]
+name = "traitgym"
+version = "0.1.0"
+description = "Benchmarking DNA Sequence Models for Causal Regulatory Variant Prediction in Human Genetics"
+authors = [
+    {name = "Gonzalo Benegas", email = "gbenegas@berkeley.edu"},
+]
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "snakemake",
+    "polars",
+    "scipy",
+    "seaborn",
+    "scikit-learn",
+    "huggingface_hub",
+    "liftover",
+    "gpn @ git+https://github.com/songlab-cal/gpn.git",
+]
+
+[project.urls]
+Homepage = "https://github.com/songlab-cal/TraitGym"
+
+[tool.snakefmt]
+include = '\.smk$|^Snakefile|\.py$'
+
+[dependency-groups]
+dev = [
+    "pre-commit",
+]

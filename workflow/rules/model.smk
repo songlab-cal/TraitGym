@@ -2,17 +2,20 @@ rule run_classifier:
     input:
         "results/dataset/{dataset}/test.parquet",
         "results/dataset/{dataset}/subset/{subset}.parquet",
-        lambda wildcards: expand("results/dataset/{{dataset}}/features/{features}.parquet", features=config["feature_sets"][wildcards.feature_set]),
+        lambda wildcards: expand(
+            "results/dataset/{{dataset}}/features/{features}.parquet",
+            features=config["feature_sets"][wildcards.feature_set],
+        ),
     output:
         "results/dataset/{dataset}/preds/{subset}/{feature_set}.{classifier,LogisticRegression|RidgeRegression|RandomForest|XGBoost|PCALogisticRegression|FeatureSelectionLogisticRegression|BestFeature}.{split_mode,chrom|odd_even|pos_quarter}.parquet",
-    threads:
-        lambda wildcards: 1 if wildcards.classifier == "BestFeature" else workflow.cores
+    threads: lambda wildcards: 1 if wildcards.classifier == "BestFeature" else workflow.cores
     run:
-        2 + 2
         V = pd.read_parquet(input[0])
         subset = pd.read_parquet(input[1])
         all_features = []
-        for features, path in zip(config["feature_sets"][wildcards.feature_set], input[2:]):
+        for features, path in zip(
+            config["feature_sets"][wildcards.feature_set], input[2:]
+        ):
             df = pd.read_parquet(path)
             df.columns = [f"{features}_{col}" for col in df.columns]
             all_features += df.columns.tolist()
@@ -21,7 +24,7 @@ rule run_classifier:
         print(V)
 
         mask_train_list = []
-        
+
         if wildcards.split_mode == "chrom":
             for chrom in V.chrom.unique():
                 mask_train = V.chrom != chrom
@@ -39,8 +42,10 @@ rule run_classifier:
         for mask_train in tqdm(mask_train_list):
             mask_test = ~mask_train
             V.loc[mask_test, "score"] = train_predict(
-                V[mask_train], V[mask_test], all_features,
-                classifier_map[wildcards.classifier]
+                V[mask_train],
+                V[mask_test],
+                all_features,
+                classifier_map[wildcards.classifier],
             )
 
         V[["score"]].to_parquet(output[0], index=False)
@@ -72,9 +77,8 @@ rule unsupervised_pred:
     run:
         V = pd.read_parquet(input[0])
         subset = pd.read_parquet(input[1])
-        df = (
-            pd.read_parquet(input[2], columns=[wildcards.feature])
-            .rename(columns={wildcards.feature: "score"})
+        df = pd.read_parquet(input[2], columns=[wildcards.feature]).rename(
+            columns={wildcards.feature: "score"}
         )
         if wildcards.sign == "minus":
             df.score = -df.score
@@ -117,17 +121,20 @@ rule classifier_coefficients:
     input:
         "results/dataset/{dataset}/test.parquet",
         "results/dataset/{dataset}/subset/{subset}.parquet",
-        lambda wildcards: expand("results/dataset/{{dataset}}/features/{features}.parquet", features=config["feature_sets"][wildcards.feature_set]),
+        lambda wildcards: expand(
+            "results/dataset/{{dataset}}/features/{features}.parquet",
+            features=config["feature_sets"][wildcards.feature_set],
+        ),
     output:
         "results/dataset/{dataset}/coefficients/{subset}/{feature_set}.csv",
-    threads:
-        workflow.cores
+    threads: workflow.cores
     run:
-        2 + 2
         V = pd.read_parquet(input[0])
         subset = pd.read_parquet(input[1])
         all_features = []
-        for features, path in zip(config["feature_sets"][wildcards.feature_set], input[2:]):
+        for features, path in zip(
+            config["feature_sets"][wildcards.feature_set], input[2:]
+        ):
             df = pd.read_parquet(path)
             df.columns = [f"{features}_{col}" for col in df.columns]
             all_features += df.columns.tolist()
@@ -135,14 +142,16 @@ rule classifier_coefficients:
         V = subset.merge(V, on=COORDINATES, how="left")
         clf = train_lasso_logistic_regression(V[all_features], V.label, V.chrom)
         linear = clf.best_estimator_.named_steps["linear"]
-        res = pd.DataFrame({
-            "feature": all_features,
-            "coef": linear.coef_[0],
-        }).sort_values("coef", ascending=False, key=abs)
+        res = pd.DataFrame(
+            {
+                "feature": all_features,
+                "coef": linear.coef_[0],
+            }
+        ).sort_values("coef", ascending=False, key=abs)
         res.to_csv(output[0], index=False)
 
 
-#rule merge_metrics:
+# rule merge_metrics:
 #    input:
 #        lambda wildcards: expand(
 #            "results/dataset/{{dataset}}/metrics/{model}.csv",
@@ -158,7 +167,7 @@ rule classifier_coefficients:
 #        df.to_csv(output[0], index=False)
 #
 #
-#rule plot_metrics:
+# rule plot_metrics:
 #    input:
 #        "results/dataset/{dataset}/test.parquet",
 #        "results/dataset/{dataset}/merged_metrics.csv",
@@ -217,10 +226,13 @@ def odds_ratio_score(y_true, y_pred, threshold_n=30):
     negative_set = df.filter(~pl.col("label")).sort("score")
     threshold = negative_set[threshold_n]["score"]
     group_counts = (
-        df.group_by(["label", pl.col("score") <= threshold]).len()
-        .sort(["label", "score"])["len"].to_numpy().reshape((2,2))
+        df.group_by(["label", pl.col("score") <= threshold])
+        .len()
+        .sort(["label", "score"])["len"]
+        .to_numpy()
+        .reshape((2, 2))
     )
-    return fisher_exact(group_counts, alternative='greater')[0]
+    return fisher_exact(group_counts, alternative="greater")[0]
 
 
 def odds_ratio_score_v2(y_true, y_pred, threshold_q=0.05):
@@ -230,10 +242,13 @@ def odds_ratio_score_v2(y_true, y_pred, threshold_q=0.05):
     df = pl.DataFrame({"label": y_true, "score": -y_pred})
     threshold = df.select(pl.col("score").quantile(threshold_q))["score"]
     group_counts = (
-        df.group_by(["label", pl.col("score") <= threshold]).len()
-        .sort(["label", "score"])["len"].to_numpy().reshape((2,2))
+        df.group_by(["label", pl.col("score") <= threshold])
+        .len()
+        .sort(["label", "score"])["len"]
+        .to_numpy()
+        .reshape((2, 2))
     )
-    return fisher_exact(group_counts, alternative='greater')[0]
+    return fisher_exact(group_counts, alternative="greater")[0]
 
 
 metric_mapping = {
@@ -243,7 +258,9 @@ metric_mapping = {
     "Spearman": spearman_score,
     "OR": odds_ratio_score,
     "OR_v2": odds_ratio_score_v2,
-    "OR_10%": lambda y_true, y_pred: odds_ratio_score_v2(y_true, y_pred, threshold_q=0.1),
+    "OR_10%": lambda y_true, y_pred: odds_ratio_score_v2(
+        y_true, y_pred, threshold_q=0.1
+    ),
 }
 BLOCKS = [
     "chrom",
@@ -275,6 +292,7 @@ rule get_metric:
         n_bootstraps = 100
         V = V.select(["label", "score"])
 
+
         def resample(V, seed):
             V_pos = V.filter(pl.col("label"))
             V_pos = V_pos.sample(len(V_pos), with_replacement=True, seed=seed)
@@ -282,13 +300,16 @@ rule get_metric:
             V_neg = V_neg.sample(len(V_neg), with_replacement=True, seed=seed)
             return pl.concat([V_pos, V_neg])
 
+
         V_bs = [resample(V, i) for i in tqdm(range(n_bootstraps))]
         se = pl.Series([metric(V_b["label"], V_b["score"]) for V_b in tqdm(V_bs)]).std()
-        res = pd.DataFrame({
-            "Model": [wildcards.model],
-            metric_name: [metric(V["label"], V["score"])],
-            "se": [se],
-        })
+        res = pd.DataFrame(
+            {
+                "Model": [wildcards.model],
+                metric_name: [metric(V["label"], V["score"])],
+                "se": [se],
+            }
+        )
         print(res)
         res.to_csv(output[0], index=False)
 
@@ -331,16 +352,19 @@ rule get_metric_by_block_weighted_average:
         res = pl.read_csv(input[0])
         metric = res.columns[-1]
 
+
         def stat(df):
             x = df[metric]
             weight = df["n"] / df["n"].sum()
             return (x * weight).sum()
 
-        res = pl.DataFrame({
-            "model": [wildcards.model],
-            "metric": [metric],
-            "score": [stat(res)],
-            "se": [bootstrap_se(res, stat)],
-        })
-        res.write_csv(output[0])
 
+        res = pl.DataFrame(
+            {
+                "model": [wildcards.model],
+                "metric": [metric],
+                "score": [stat(res)],
+                "se": [bootstrap_se(res, stat)],
+            }
+        )
+        res.write_csv(output[0])

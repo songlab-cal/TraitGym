@@ -1,0 +1,14 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0  # Use the latest stable version
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-added-large-files
+        args: ['--maxkb=10000']  # Warn for files >10MB
+
+  - repo: https://github.com/snakemake/snakefmt
+    rev: v0.11.2
+    hooks:
+      - id: snakefmt

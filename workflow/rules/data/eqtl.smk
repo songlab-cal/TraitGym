@@ -34,11 +34,13 @@ rule eqtl_process:
     run:
         V = (
             pl.read_csv(
-                input[0], separator="\t",
+                input[0],
+                separator="\t",
                 columns=["variant_hg38", "method", "tissue", "gene", "maf", "pip", "z"],
             )
             .with_columns(
-                pl.col("variant_hg38").str.split_exact("_", 4)
+                pl.col("variant_hg38")
+                .str.split_exact("_", 4)
                 .struct.rename_fields(COORDINATES + ["build"])
             )
             .with_columns(
@@ -52,7 +54,7 @@ rule eqtl_process:
         print(V)
         V = (
             V.with_columns(
-                p=2*stats.norm.sf(abs(V["z"])),
+                p=2 * stats.norm.sf(abs(V["z"])),
             )
             # when PIP > 0.9, manually override as 0.5 when not genome-wide significant
             # (0.5 so it's excluded from both positive and negative set)
@@ -61,8 +63,9 @@ rule eqtl_process:
                 .then(pl.lit(0.5))
                 .otherwise(pl.col("pip"))
                 .alias("pip")
+            ).select(
+                ["chrom", "pos", "ref", "alt", "tissue", "gene", "method", "pip", "maf"]
             )
-            .select(["chrom", "pos", "ref", "alt", "tissue", "gene", "method", "pip", "maf"])
         )
         print(V)
         V = (
@@ -71,7 +74,7 @@ rule eqtl_process:
                 pl.mean("pip"),
                 (pl.max("pip") - pl.min("pip")).alias("pip_diff"),
                 pl.count().alias("pip_n"),
-                pl.mean("maf")
+                pl.mean("maf"),
             )
             .filter(pl.col("pip_n") == 2, pl.col("pip_diff") < 0.05)
             .drop("pip_n", "pip_diff")
@@ -94,7 +97,7 @@ rule eqtl_process:
         print(V.shape)
         V = sort_variants(V)
         print(V)
-        V.to_parquet(output[0], index=False) 
+        V.to_parquet(output[0], index=False)
 
 
 rule eqtl_positive:
@@ -103,11 +106,7 @@ rule eqtl_positive:
     output:
         "results/eqtl/pos.parquet",
     run:
-        V = (
-            pl.read_parquet(input[0])
-            .filter(pl.col("pip") > 0.9)
-            .to_pandas()
-        )
+        V = pl.read_parquet(input[0]).filter(pl.col("pip") > 0.9).to_pandas()
         V = V.drop_duplicates(COORDINATES)
         V = V[V.consequence.isin(TARGET_CONSEQUENCES)]
         assert len(V) == len(V.drop_duplicates(COORDINATES))

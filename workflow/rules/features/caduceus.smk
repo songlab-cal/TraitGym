@@ -4,8 +4,7 @@ rule caduceus_run_vep_llr:
         "results/genome.fa.gz",
     output:
         "results/dataset/{dataset}/features/Caduceus_LLR.parquet",
-    threads:
-        workflow.cores
+    threads: workflow.cores
     shell:
         """
         python \
@@ -22,8 +21,7 @@ rule caduceus_run_vep_inner_products:
         "results/genome.fa.gz",
     output:
         "results/dataset/{dataset}/features/Caduceus_InnerProducts.parquet",
-    threads:
-        workflow.cores
+    threads: workflow.cores
     shell:
         """
         python \
@@ -40,8 +38,7 @@ rule caduceus_run_vep_embeddings:
         "results/genome.fa.gz",
     output:
         "results/dataset/{dataset}/features/Caduceus_Embeddings.parquet",
-    threads:
-        workflow.cores
+    threads: workflow.cores
     shell:
         """
         python \

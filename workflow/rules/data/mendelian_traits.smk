@@ -25,9 +25,9 @@ rule omim_process:
             df = pd.read_excel(input[0], sheet_name=variant_type)
             dfs.append(df)
         V = pd.concat(dfs)
-        V = V[["Chr", "Position", "Ref", "Alt", "OMIM"]].rename(columns={
-            "Chr": "chrom", "Position": "pos", "Ref": "ref", "Alt": "alt"
-        })
+        V = V[["Chr", "Position", "Ref", "Alt", "OMIM"]].rename(
+            columns={"Chr": "chrom", "Position": "pos", "Ref": "ref", "Alt": "alt"}
+        )
         V.chrom = V.chrom.str.replace("chr", "")
         V = filter_snp(V)
         V = lift_hg19_to_hg38(V)
@@ -59,9 +59,11 @@ rule mendelian_traits_dataset:
         V["start"] = V.pos - 1
         V["end"] = V.pos
         tss = pd.read_parquet(input[2], columns=["chrom", "start", "end"])
-        V = bf.closest(V, tss).rename(columns={
-            "distance": "tss_dist"
-        }).drop(columns=["start", "end", "chrom_", "start_", "end_"])
+        V = (
+            bf.closest(V, tss)
+            .rename(columns={"distance": "tss_dist"})
+            .drop(columns=["start", "end", "chrom_", "start_", "end_"])
+        )
 
         match_features = ["tss_dist"]
 
@@ -71,9 +73,13 @@ rule mendelian_traits_dataset:
             print(c)
             V_c = V[V.consequence == c].copy()
             for f in match_features:
-                V_c[f"{f}_scaled"] = RobustScaler().fit_transform(V_c[f].values.reshape(-1, 1))
+                V_c[f"{f}_scaled"] = RobustScaler().fit_transform(
+                    V_c[f].values.reshape(-1, 1)
+                )
             print(V_c.label.value_counts())
-            V_c = match_columns_k(V_c, "label", [f"{f}_scaled" for f in match_features], k)
+            V_c = match_columns_k(
+                V_c, "label", [f"{f}_scaled" for f in match_features], k
+            )
             V_c["match_group"] = c + "_" + V_c.match_group.astype(str)
             print(V_c.label.value_counts())
             print(V_c.groupby("label")[match_features].median())
@@ -121,7 +127,7 @@ rule mendelian_traits_subset_trait:
         V = pd.read_parquet(input[0])
         target_size = 1 + int(wildcards.k)
         V = V[(~V.label) | (V.OMIM == f"MIM {wildcards.t}")]
-        match_group_size = V.match_group.value_counts() 
+        match_group_size = V.match_group.value_counts()
         match_groups = match_group_size[match_group_size == target_size].index
         V = V[V.match_group.isin(match_groups)]
         V[COORDINATES].to_parquet(output[0], index=False)
@@ -151,9 +157,11 @@ rule mendelian_dataset_v21:
         V["start"] = V.pos - 1
         V["end"] = V.pos
         tss = pd.read_parquet(input[2], columns=["chrom", "start", "end"])
-        V = bf.closest(V, tss).rename(columns={
-            "distance": "tss_dist"
-        }).drop(columns=["start", "end", "chrom_", "start_", "end_"])
+        V = (
+            bf.closest(V, tss)
+            .rename(columns={"distance": "tss_dist"})
+            .drop(columns=["start", "end", "chrom_", "start_", "end_"])
+        )
 
         match_features = ["tss_dist"]
 
@@ -163,9 +171,13 @@ rule mendelian_dataset_v21:
             print(c)
             V_c = V[V.consequence == c].copy()
             for f in match_features:
-                V_c[f"{f}_scaled"] = RobustScaler().fit_transform(V_c[f].values.reshape(-1, 1))
+                V_c[f"{f}_scaled"] = RobustScaler().fit_transform(
+                    V_c[f].values.reshape(-1, 1)
+                )
             print(V_c.label.value_counts())
-            V_c = match_columns_k(V_c, "label", [f"{f}_scaled" for f in match_features], k)
+            V_c = match_columns_k(
+                V_c, "label", [f"{f}_scaled" for f in match_features], k
+            )
             V_c["match_group"] = c + "_" + V_c.match_group.astype(str)
             print(V_c.label.value_counts())
             print(V_c.groupby("label")[match_features].median())
@@ -202,9 +214,16 @@ rule mendelian_dataset_v22:
         V["start"] = V.pos - 1
         V["end"] = V.pos
         tss = pd.read_parquet(input[2])
-        V = bf.closest(V, tss).rename(columns={
-            "distance": "tss_dist", "gene_id_": "gene",
-        }).drop(columns=["start", "end", "chrom_", "start_", "end_"])
+        V = (
+            bf.closest(V, tss)
+            .rename(
+                columns={
+                    "distance": "tss_dist",
+                    "gene_id_": "gene",
+                }
+            )
+            .drop(columns=["start", "end", "chrom_", "start_", "end_"])
+        )
 
         match_features = ["tss_dist"]
 
@@ -214,9 +233,13 @@ rule mendelian_dataset_v22:
             print(c)
             V_c = V[V.consequence == c].copy()
             for f in match_features:
-                V_c[f"{f}_scaled"] = RobustScaler().fit_transform(V_c[f].values.reshape(-1, 1))
+                V_c[f"{f}_scaled"] = RobustScaler().fit_transform(
+                    V_c[f].values.reshape(-1, 1)
+                )
             print(V_c.label.value_counts())
-            V_c = match_columns_k_gene(V_c, "label", [f"{f}_scaled" for f in match_features], k)
+            V_c = match_columns_k_gene(
+                V_c, "label", [f"{f}_scaled" for f in match_features], k
+            )
             V_c["match_group"] = c + "_" + V_c.match_group.astype(str)
             print(V_c.label.value_counts())
             print(V_c.groupby("label")[match_features].median())
@@ -240,7 +263,7 @@ rule dataset_de_novo_v1:
             pl.read_parquet(input[0])
             .filter(
                 pl.col("consequence") == "5_prime_UTR_variant",
-                pl.col("maf").is_null() # de novo
+                pl.col("maf").is_null(),  # de novo
             )
             .with_columns(label=pl.lit(True))
         )
@@ -252,7 +275,9 @@ rule dataset_de_novo_v1:
             .with_columns(label=pl.lit(False))
         )
         print(neg)
-        V = pl.concat([pos, neg], how="diagonal_relaxed").unique(COORDINATES, keep="first")
+        V = pl.concat([pos, neg], how="diagonal_relaxed").unique(
+            COORDINATES, keep="first"
+        )
         print(V)
         print(V["label"].value_counts())
         V.write_parquet(output[0])
@@ -273,12 +298,14 @@ rule run_vep_cadd_in_memory:
     threads: workflow.cores
     run:
         V = pl.read_parquet(input[0], columns=COORDINATES)
-        preds = pl.concat([
-            pl.read_parquet(path).join(V, on=COORDINATES, how="inner")
-            for path in tqdm(input[1:])
-        ])
+        preds = pl.concat(
+            [
+                pl.read_parquet(path).join(V, on=COORDINATES, how="inner")
+                for path in tqdm(input[1:])
+            ]
+        )
         V = V.join(preds, on=COORDINATES, how="left")
-        V = V.with_columns(-pl.col("score")) # undo the negation
+        V = V.with_columns(-pl.col("score"))  # undo the negation
         print(V)
         V.select("score").write_parquet(output[0])
 
@@ -315,11 +342,12 @@ rule gpnmsa_process_chrom:
     run:
         (
             pl.read_csv(
-                input[0], has_header=False, separator="\t",
+                input[0],
+                has_header=False,
+                separator="\t",
                 new_columns=COORDINATES + ["score"],
                 dtypes={"chrom": str, "score": pl.Float32},
-            )
-            .write_parquet(output[0])
+            ).write_parquet(output[0])
         )
 
 
@@ -332,12 +360,14 @@ rule run_vep_gpnmsa_in_memory:
     threads: workflow.cores
     run:
         V = pl.read_parquet(input[0], columns=COORDINATES)
-        preds = pl.concat([
-            pl.read_parquet(path).join(V, on=COORDINATES, how="inner")
-            for path in tqdm(input[1:])
-        ])
+        preds = pl.concat(
+            [
+                pl.read_parquet(path).join(V, on=COORDINATES, how="inner")
+                for path in tqdm(input[1:])
+            ]
+        )
         V = V.join(preds, on=COORDINATES, how="left")
-        V = V.with_columns(-pl.col("score")) # minus LLR
+        V = V.with_columns(-pl.col("score"))  # minus LLR
         print(V)
         V.select("score").write_parquet(output[0])
 
@@ -346,10 +376,9 @@ rule download_hgmd_omim:
     output:
         "results/variants/hgmd_omim.parquet",
     run:
-        V = (
-            pl.read_parquet('hf://datasets/gonzalobenegas/hgmd-omim-gnomad/test.parquet')
-            .filter(pl.col("label"))
-        )
+        V = pl.read_parquet(
+            "hf://datasets/gonzalobenegas/hgmd-omim-gnomad/test.parquet"
+        ).filter(pl.col("label"))
         print(V)
         V.write_parquet(output[0])
 
@@ -365,7 +394,7 @@ rule dataset_de_novo_v2:
             pl.read_parquet(input[0])
             .filter(
                 pl.col("consequence") == "5_prime_UTR_variant",
-                pl.col("AF").is_null() # de novo
+                pl.col("AF").is_null(),  # de novo
             )
             .with_columns(label=pl.lit(True))
         )
@@ -377,20 +406,30 @@ rule dataset_de_novo_v2:
             .with_columns(label=pl.lit(False))
         )
         print(neg)
-        V = pl.concat([pos, neg], how="diagonal_relaxed").unique(COORDINATES, keep="first")
+        V = pl.concat([pos, neg], how="diagonal_relaxed").unique(
+            COORDINATES, keep="first"
+        )
         print(V)
         print(V["label"].value_counts())
         V.write_parquet(output[0])
 
 
 de_novo_consequences = [
-    "5_prime_UTR_variant", "3_prime_UTR_variant", "intron_variant",
-    "missense_variant", "synonymous_variant", "stop_gained",
-    "stop_lost", "frameshift_variant", "splice_acceptor_variant",
-    "splice_donor_variant", "splice_region_variant",
+    "5_prime_UTR_variant",
+    "3_prime_UTR_variant",
+    "intron_variant",
+    "missense_variant",
+    "synonymous_variant",
+    "stop_gained",
+    "stop_lost",
+    "frameshift_variant",
+    "splice_acceptor_variant",
+    "splice_donor_variant",
+    "splice_region_variant",
     "non_coding_transcript_exon_variant",
     "upstream_gene_variant",
 ]
+
 
 rule dataset_de_novo_v3:
     input:
@@ -406,8 +445,7 @@ rule dataset_de_novo_v3:
         pos = (
             pl.read_parquet(input[0])
             .filter(
-                pl.col("consequence") == consequence,
-                pl.col("AF").is_null() # de novo
+                pl.col("consequence") == consequence, pl.col("AF").is_null()  # de novo
             )
             .with_columns(label=pl.lit(True))
         )
@@ -419,7 +457,9 @@ rule dataset_de_novo_v3:
             .with_columns(label=pl.lit(False))
         )
         print(neg)
-        V = pl.concat([pos, neg], how="diagonal_relaxed").unique(COORDINATES, keep="first")
+        V = pl.concat([pos, neg], how="diagonal_relaxed").unique(
+            COORDINATES, keep="first"
+        )
         print(V)
         max_n = 9 * V["label"].sum()
         V = (
@@ -446,20 +486,20 @@ rule dataset_de_novo_v4:
             .with_columns(label=pl.lit(True))
         )
         print(pos)
-        neg = (
-            pl.read_parquet(input[1])
-            .filter(AF=0)
-            .with_columns(label=pl.lit(False))
-        )
+        neg = pl.read_parquet(input[1]).filter(AF=0).with_columns(label=pl.lit(False))
         print(neg)
         # there could be pathogenic variants in the "neg" class, so we filter them out
-        V = pl.concat([pos, neg], how="diagonal_relaxed").unique(COORDINATES, keep="first")
+        V = pl.concat([pos, neg], how="diagonal_relaxed").unique(
+            COORDINATES, keep="first"
+        )
         print(V)
         print(V["label"].value_counts())
         V = V.to_pandas()
         continuous_features = []
         categorical_features = ["chrom", "consequence"]
-        V = match_features(V[V.label], V[~V.label], continuous_features, categorical_features, k)
+        V = match_features(
+            V[V.label], V[~V.label], continuous_features, categorical_features, k
+        )
         V = sort_variants(V)
         print(V)
         print(V["label"].value_counts())
@@ -478,13 +518,11 @@ rule dataset_de_novo_v4_all:
             .filter(AF=0)  # de novo
             .with_columns(label=pl.lit(True))
         )
-        neg = (
-            pl.read_parquet(input[1])
-            .filter(AF=0)
-            .with_columns(label=pl.lit(False))
-        )
+        neg = pl.read_parquet(input[1]).filter(AF=0).with_columns(label=pl.lit(False))
         # there could be pathogenic variants in the "neg" class, so we filter them out
-        V = pl.concat([pos, neg], how="diagonal_relaxed").unique(COORDINATES, keep="first")
+        V = pl.concat([pos, neg], how="diagonal_relaxed").unique(
+            COORDINATES, keep="first"
+        )
         print(V)
         V = V.filter(pl.col("consequence").is_in(pos["consequence"].unique()))
         print(V)
@@ -505,24 +543,23 @@ rule dataset_de_novo_v5:
             pl.read_parquet(input[0])
             .filter(AF=0)  # de novo
             .with_columns(label=pl.lit(True))
-
         )
         print(pos)
-        neg = (
-            pl.read_parquet(input[1])
-            .filter(AF=0)
-            .with_columns(label=pl.lit(False))
-        )
+        neg = pl.read_parquet(input[1]).filter(AF=0).with_columns(label=pl.lit(False))
         print(neg)
         # there could be pathogenic variants in the "neg" class, so we filter them out
-        V = pl.concat([pos, neg], how="diagonal_relaxed").unique(COORDINATES, keep="first")
+        V = pl.concat([pos, neg], how="diagonal_relaxed").unique(
+            COORDINATES, keep="first"
+        )
         V = V.filter(pl.col("chrom").is_in(AUTOSOMES))
         print(V)
         print(V["label"].value_counts())
         V = V.to_pandas()
         continuous_features = []
         categorical_features = ["chrom", "consequence"]
-        V = match_features(V[V.label], V[~V.label], continuous_features, categorical_features, k)
+        V = match_features(
+            V[V.label], V[~V.label], continuous_features, categorical_features, k
+        )
         V = sort_variants(V)
         print(V)
         print(V["label"].value_counts())
@@ -541,13 +578,11 @@ rule dataset_de_novo_v5_all:
             .filter(AF=0)  # de novo
             .with_columns(label=pl.lit(True))
         )
-        neg = (
-            pl.read_parquet(input[1])
-            .filter(AF=0)
-            .with_columns(label=pl.lit(False))
-        )
+        neg = pl.read_parquet(input[1]).filter(AF=0).with_columns(label=pl.lit(False))
         # there could be pathogenic variants in the "neg" class, so we filter them out
-        V = pl.concat([pos, neg], how="diagonal_relaxed").unique(COORDINATES, keep="first")
+        V = pl.concat([pos, neg], how="diagonal_relaxed").unique(
+            COORDINATES, keep="first"
+        )
         V = V.filter(pl.col("chrom").is_in(AUTOSOMES))
         print(V)
         V = V.filter(pl.col("consequence").is_in(pos["consequence"].unique()))

@@ -5,8 +5,7 @@ rule gpn_version_run_vep_llr:
         lambda wildcards: config["gpn"][wildcards.version]["model_path"],
     output:
         "results/dataset/{dataset}/features/GPN_{version}_LLR.parquet",
-    threads:
-        workflow.cores
+    threads: workflow.cores
     priority: 102
     shell:
         """
@@ -25,8 +24,7 @@ rule gpn_version_run_inner_products:
         lambda wildcards: config["gpn"][wildcards.version]["model_path"],
     output:
         "results/dataset/{dataset}/features/GPN_{version}_InnerProducts.parquet",
-    threads:
-        workflow.cores
+    threads: workflow.cores
     priority: 102
     shell:
         """
@@ -45,8 +43,7 @@ rule gpn_version_run_euclidean_distance:
         lambda wildcards: config["gpn"][wildcards.version]["model_path"],
     output:
         "results/dataset/{dataset}/features/GPN_{version}_EuclideanDistance2.parquet",
-    threads:
-        workflow.cores
+    threads: workflow.cores
     priority: 102
     shell:
         """
@@ -65,8 +62,7 @@ rule gpn_version_run_euclidean_distances:
         lambda wildcards: config["gpn"][wildcards.version]["model_path"],
     output:
         "results/dataset/{dataset}/features/GPN_{version}_EuclideanDistances.parquet",
-    threads:
-        workflow.cores
+    threads: workflow.cores
     priority: 102
     shell:
         """
@@ -85,8 +81,7 @@ rule gpn_version_run_mean_euclidean_distance:
         lambda wildcards: config["gpn"][wildcards.version]["model_path"],
     output:
         "results/dataset/{dataset}/features/GPN_{version}_MeanEuclideanDistance.parquet",
-    threads:
-        workflow.cores
+    threads: workflow.cores
     priority: 102
     shell:
         """
@@ -105,8 +100,7 @@ rule gpn_version_run_cosine_similarity:
         lambda wildcards: config["gpn"][wildcards.version]["model_path"],
     output:
         "results/dataset/{dataset}/features/GPN_{version}_CosineSimilarity.parquet",
-    threads:
-        workflow.cores
+    threads: workflow.cores
     priority: 102
     shell:
         """
@@ -125,8 +119,7 @@ rule gpn_version_run_mean_cosine_similarity:
         lambda wildcards: config["gpn"][wildcards.version]["model_path"],
     output:
         "results/dataset/{dataset}/features/GPN_{version}_MeanCosineSimilarity.parquet",
-    threads:
-        workflow.cores
+    threads: workflow.cores
     priority: 102
     shell:
         """
@@ -145,8 +138,7 @@ rule gpn_version_run_influence:
         lambda wildcards: config["gpn"][wildcards.version]["model_path"],
     output:
         "results/dataset/{dataset}/features/GPN_{version}_Influence.parquet",
-    threads:
-        workflow.cores
+    threads: workflow.cores
     priority: 102
     shell:
         """
@@ -165,8 +157,7 @@ rule gpn_version_run_vep_embeddings:
         lambda wildcards: config["gpn"][wildcards.version]["model_path"],
     output:
         "results/dataset/{dataset}/features/GPN_{version}_Embeddings.parquet",
-    threads:
-        workflow.cores
+    threads: workflow.cores
     priority: 102
     shell:
         """
