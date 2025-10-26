@@ -102,24 +102,9 @@ def lift_hg19_to_hg38(V: pd.DataFrame) -> pd.DataFrame:
     return V
 
 
-def sort_chrom_pos(V):
-    chrom_order = [str(i) for i in range(1, 23)] + ["X", "Y"]
-    V.chrom = pd.Categorical(V.chrom, categories=chrom_order, ordered=True)
-    if "ref" not in V.columns:
-        V = V.sort_values(["chrom", "pos"])
-    else:
-        V = V.sort_values(["chrom", "pos", "ref", "alt"])
-    V.chrom = V.chrom.astype(str)
-    return V
-
-
-sort_variants = sort_chrom_pos
-
-
-def sort_chrom_pos_ref_alt(V):
-    chrom_order = [str(i) for i in range(1, 23)] + ["X", "Y"]
-    V.chrom = pd.Categorical(V.chrom, categories=chrom_order, ordered=True)
-    V = V.sort_values(["chrom", "pos", "ref", "alt"])
+def sort_variants(V: pd.DataFrame) -> pd.DataFrame:
+    V.chrom = pd.Categorical(V.chrom, categories=CHROMS, ordered=True)
+    V = V.sort_values(COORDINATES)
     V.chrom = V.chrom.astype(str)
     return V
 
@@ -129,7 +114,7 @@ def check_ref(V, genome):
     return V
 
 
-def check_ref_alt(V, genome):
+def check_ref_alt(V: pd.DataFrame, genome: Genome) -> pd.DataFrame:
     V["ref_nuc"] = V.progress_apply(
         lambda v: genome.get_nuc(v.chrom, v.pos).upper(), axis=1
     )

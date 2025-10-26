@@ -16,7 +16,7 @@ rule clinvar_process:
         "results/clinvar/all.vcf.gz",
         "results/clinvar/all.vcf.gz.tbi",
     output:
-        "results/clinvar/all.parquet",
+        temp("results/clinvar/all.parquet"),
     run:
         rows = []
         for variant in VCF(input[0]):
@@ -41,7 +41,7 @@ rule clinvar_process:
 
 rule clinvar_submission_summary_download:
     output:
-        "results/clinvar/submission_summary.txt.gz",
+        temp("results/clinvar/submission_summary.txt.gz"),
     shell:
         "wget {clinvar_submission_summary_url} -O {output}"
 
@@ -50,7 +50,7 @@ rule clinvar_submission_summary_process:
     input:
         "results/clinvar/submission_summary.txt.gz",
     output:
-        "results/clinvar/submission_summary.parquet",
+        temp("results/clinvar/submission_summary.parquet"),
     run:
         pd.read_csv(input[0], sep="\t", skiprows=18).to_parquet(output[0], index=False)
 
@@ -59,7 +59,7 @@ rule clinvar_submission_summary_omim:
     input:
         "results/clinvar/submission_summary.parquet",
     output:
-        "results/clinvar/submission_summary_omim.parquet",
+        temp("results/clinvar/submission_summary_omim.parquet"),
     run:
         df = (
             pl.read_parquet(
