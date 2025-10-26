@@ -18,6 +18,7 @@ dependencies = [
     "gpn @ git+https://github.com/songlab-cal/gpn.git",
     "cyvcf2>=0.31.4",
     "openpyxl>=3.1.5",
+    "gnomad-db @ git+https://github.com/KalinNonchev/gnomAD_DB.git",
 ]
 
 [project.urls]

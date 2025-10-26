@@ -2,6 +2,7 @@ import bioframe as bf
 from cyvcf2 import VCF
 from datasets import load_dataset
 from gpn.data import Genome, load_table, load_dataset_from_file_or_dir
+from gnomad_db.database import gnomAD_DB
 from liftover import get_lifter
 import matplotlib.pyplot as plt
 import numpy as np
@@ -259,7 +260,8 @@ rule run_ensembl_vep:
         "results/ensembl_vep_cache",
     output:
         temp("{anything}.ensembl_vep.output.tsv.gz"),
-    singularity:
+        temp("{anything}.ensembl_vep.output.tsv.gz_summary.html"),
+    container:
         "docker://ensemblorg/ensembl-vep:release_109.1"
     threads: workflow.cores
     shell:
@@ -303,9 +305,7 @@ rule process_ensembl_vep:
             .list.get(1)
             .alias("alt"),
         ).drop("variant")
-        V = V.join(V2, on=COORDINATES, how="inner")
-        V = V.sort(COORDINATES)
-        print(V)
+        V = V.join(V2, on=COORDINATES, how="left", maintain_order="left")
         V.write_parquet(output[0])
 
 

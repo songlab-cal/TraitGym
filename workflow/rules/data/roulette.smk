@@ -17,8 +17,6 @@ rule roulette_process:
         chrom="|".join(CHROMS),
     threads: workflow.cores
     run:
-        from cyvcf2 import VCF
-
         rows = []
         for variant in VCF(input[0]):
             rows.append(

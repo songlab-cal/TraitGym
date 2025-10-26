@@ -793,6 +793,18 @@ wheels = [
 ]
 
 [[package]]
+name = "gnomad-db"
+version = "0.1.4"
+source = { git = "https://github.com/KalinNonchev/gnomAD_DB.git#f120c557cd47c23a28031f5d5300b5953a93c23f" }
+dependencies = [
+    { name = "joblib" },
+    { name = "numpy" },
+    { name = "pandas" },
+    { name = "pyyaml" },
+    { name = "tqdm" },
+]
+
+[[package]]
 name = "gpn"
 version = "0.7"
 source = { git = "https://github.com/songlab-cal/gpn.git#b5cb2be0095841984ea199d2cd671b77796d7dd1" }
@@ -2821,6 +2833,7 @@ version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
     { name = "cyvcf2" },
+    { name = "gnomad-db" },
     { name = "gpn" },
     { name = "huggingface-hub" },
     { name = "liftover" },
@@ -2840,6 +2853,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "cyvcf2", specifier = ">=0.31.4" },
+    { name = "gnomad-db", git = "https://github.com/KalinNonchev/gnomAD_DB.git" },
     { name = "gpn", git = "https://github.com/songlab-cal/gpn.git" },
     { name = "huggingface-hub" },
     { name = "liftover" },

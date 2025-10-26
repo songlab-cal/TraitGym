@@ -1,3 +1,53 @@
+rule mendelian_traits_merge_sources:
+    input:
+        "results/clinvar/omim.parquet",
+        "results/smedley_et_al/variants.parquet",
+        "results/hgmd/variants.parquet",
+        "results/roulette/merged.parquet",
+    output:
+        "results/mendelian_traits/all.parquet",
+    run:
+        (
+            pl.concat(
+                [
+                    pl.read_parquet(input[0]).with_columns(source=pl.lit("clinvar")),
+                    pl.read_parquet(input[1]).with_columns(
+                        source=pl.lit("smedley_et_al")
+                    ),
+                    pl.read_parquet(input[2]).with_columns(source=pl.lit("hgmd")),
+                    pl.read_parquet(input[3]).with_columns(source=pl.lit("roulette")),
+                ],
+                how="diagonal_relaxed",
+            ).write_parquet(output[0])
+        )
+
+
+rule mendelian_traits_filter_AF:
+    input:
+        "results/mendelian_traits/all.annot_AF.parquet",
+    output:
+        "results/mendelian_traits/rare.parquet",
+    run:
+        (
+            pl.read_parquet(input[0])
+            .filter(pl.col("AF") < config["mendelian_traits"]["af_threshold"] / 100)
+            .write_parquet(output[0])
+        )
+
+
+rule mendelian_traits_filter_consequence:
+    input:
+        "results/mendelian_traits/filt_AF.annot.parquet",
+    output:
+        "results/mendelian_traits/filt_AF_consequence.parquet",
+    run:
+        (
+            pl.read_parquet(input[0])
+            .filter(pl.col("consequence").isin(config["consequences"]))
+            .write_parquet(output[0])
+        )
+
+
 rule mendelian_traits_dataset:
     input:
         "results/omim/variants.annot_with_cre.annot_MAF.parquet",

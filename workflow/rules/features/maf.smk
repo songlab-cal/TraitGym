@@ -62,8 +62,6 @@ rule annot_af:
         "{anything}.annot_{af_col,AF}.parquet",
     threads: workflow.cores
     run:
-        from gnomad_db.database import gnomAD_DB
-
         V = pd.read_parquet(input[0])
         db = gnomAD_DB(input[1], gnomad_version="v3", parallel=True)
         V["AF"] = db.get_info_from_df(V, wildcards.af_col)[wildcards.af_col]
