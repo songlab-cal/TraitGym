@@ -24,7 +24,6 @@ from sklearn.metrics import average_precision_score, roc_auc_score
 from sklearn.model_selection import GroupKFold, GridSearchCV
 from sklearn.preprocessing import StandardScaler, RobustScaler
 from sklearn.pipeline import Pipeline
-import torch
 from tqdm import tqdm
 import yaml
 
@@ -223,7 +222,8 @@ rule make_ensembl_vep_input:
     input:
         "{anything}.parquet",
     output:
-        temp("{anything}.ensembl_vep.input.tsv.gz"),
+        #temp("{anything}.ensembl_vep.input.tsv.gz"),
+        "{anything}.ensembl_vep.input.tsv.gz",
     threads: workflow.cores
     run:
         df = pd.read_parquet(input[0])
@@ -241,13 +241,13 @@ rule make_ensembl_vep_input:
 
 
 # additional snakemake args (SCF):
-# --use-singularity --singularity-args "--bind /scratch/users/gbenegas"
+# --sdm apptainer --apptainer-args "--bind /scratch/users/gbenegas"
 # or in savio:
-# --use-singularity --singularity-args "--bind /global/scratch/projects/fc_songlab/gbenegas"
+# --sdm apptainer --apptainer-args "--bind /global/scratch/projects/fc_songlab/gbenegas"
 rule install_ensembl_vep_cache:
     output:
         directory("results/ensembl_vep_cache"),
-    singularity:
+    container:
         "docker://ensemblorg/ensembl-vep:release_109.1"
     threads: workflow.cores
     shell:
@@ -259,8 +259,10 @@ rule run_ensembl_vep:
         "{anything}.ensembl_vep.input.tsv.gz",
         "results/ensembl_vep_cache",
     output:
-        temp("{anything}.ensembl_vep.output.tsv.gz"),
-        temp("{anything}.ensembl_vep.output.tsv.gz_summary.html"),
+        #temp("{anything}.ensembl_vep.output.tsv.gz"),
+        #temp("{anything}.ensembl_vep.output.tsv.gz_summary.html"),
+        "{anything}.ensembl_vep.output.tsv.gz",
+        "{anything}.ensembl_vep.output.tsv.gz_summary.html",
     container:
         "docker://ensemblorg/ensembl-vep:release_109.1"
     threads: workflow.cores
@@ -307,21 +309,6 @@ rule process_ensembl_vep:
         ).drop("variant")
         V = V.join(V2, on=COORDINATES, how="left", maintain_order="left")
         V.write_parquet(output[0])
-
-
-#        V = pd.read_parquet(input[0])
-#        V2 = pd.read_csv(
-#            input[1], sep="\t", header=None, comment="#",
-#            usecols=[0, 6]
-#        ).rename(columns={0: "variant", 6: "consequence"})
-#        V2["chrom"] = V2.variant.str.split("_").str[0]
-#        V2["pos"] = V2.variant.str.split("_").str[1].astype(int)
-#        V2["ref"] = V2.variant.str.split("_").str[2].str.split("/").str[0]
-#        V2["alt"] = V2.variant.str.split("_").str[2].str.split("/").str[1]
-#        V2.drop(columns=["variant"], inplace=True)
-#        V = V.merge(V2, on=COORDINATES, how="inner")
-#        print(V)
-#        V.to_parquet(output[0], index=False)
 
 
 rule cre_annotation:

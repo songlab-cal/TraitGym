@@ -26,11 +26,26 @@ rule mendelian_traits_filter_AF:
     input:
         "results/mendelian_traits/all.annot_AF.parquet",
     output:
-        "results/mendelian_traits/rare.parquet",
+        "results/mendelian_traits/filt_AF.parquet",
     run:
         (
             pl.read_parquet(input[0])
             .filter(pl.col("AF") < config["mendelian_traits"]["af_threshold"] / 100)
+            .write_parquet(output[0])
+        )
+
+
+rule mendelian_traits_full_consequence_counts:
+    input:
+        "results/mendelian_traits/filt_AF.annot.parquet",
+    output:
+        "results/mendelian_traits/consequence_counts.parquet",
+    run:
+        (
+            pl.read_parquet(input[0])
+            .filter(pl.col("source") != "roulette")
+            .group_by(["source", "consequence"])
+            .agg(pl.count())
             .write_parquet(output[0])
         )
 
@@ -43,7 +58,23 @@ rule mendelian_traits_filter_consequence:
     run:
         (
             pl.read_parquet(input[0])
-            .filter(pl.col("consequence").isin(config["consequences"]))
+            .filter(pl.col("consequence").is_in(config["consequences"]))
+            .write_parquet(output[0])
+        )
+
+
+rule mendelian_traits_drop_duplicates:
+    input:
+        "results/mendelian_traits/filt_AF_consequence.parquet",
+    output:
+        "results/mendelian_traits/unique.parquet",
+    run:
+        (
+            pl.read_parquet(input[0])
+            # reflects the order in which they were concatenated:
+            # clinvar, smedley et al, hgmd, roulette
+            .unique(COORDINATES, keep="first", maintain_order=True)
+            .sort(COORDINATES)
             .write_parquet(output[0])
         )
 
