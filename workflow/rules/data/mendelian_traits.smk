@@ -79,6 +79,26 @@ rule mendelian_traits_drop_duplicates:
         )
 
 
+rule mendelian_traits_add_additional_features:
+    input:
+        "results/mendelian_traits/unique.parquet",
+        "results/cre.parquet",
+        "results/tss.parquet",
+        "results/exon.parquet",
+    output:
+        "results/mendelian_traits/unique_additional_features.parquet",
+    run:
+        V = pl.read_parquet(input[0])
+        V = V.with_columns(original_consequence=pl.col("consequence"))
+        cre = pl.read_parquet(input[1])
+        tss = pl.read_parquet(input[2])
+        exon = pl.read_parquet(input[3])
+        V = add_cre(V, cre)
+        V = add_tss(V, tss)
+        V = add_exon(V, exon)
+        V.write_parquet(output[0])
+
+
 rule mendelian_traits_dataset:
     input:
         "results/omim/variants.annot_with_cre.annot_MAF.parquet",

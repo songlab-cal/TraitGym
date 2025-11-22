@@ -54,7 +54,6 @@ First, clone the repo and `cd` into it.
 Second, install the dependencies:
 ```bash
 uv sync
-source .venv/bin/activate
 ```
 
 For development (includes pre-commit hooks):
@@ -64,7 +63,7 @@ uv sync --group dev
 Optionally, download precomputed datasets and predictions (6.7G):
 ```bash
 mkdir -p results/dataset
-hf download songlab/TraitGym --repo-type dataset --local-dir results/dataset/
+uv run huggingface-cli download songlab/TraitGym --repo-type dataset --local-dir results/dataset/
 ```
 
 ### Code Formatting
@@ -72,12 +71,12 @@ This project uses pre-commit hooks for automatic code formatting and linting.
 
 To set up:
 ```bash
-pre-commit install
+uv run pre-commit install
 ```
 
 To manually run all hooks:
 ```bash
-pre-commit run --all-files
+uv run pre-commit run
 ```
 
 The hooks will automatically run on every commit for changed files.
@@ -85,7 +84,7 @@ The hooks will automatically run on every commit for changed files.
 ### Running
 To compute a specific result, specify its path:
 ```bash
-snakemake --cores all <path>
+uv run snakemake --cores all <path>
 ```
 Example paths (these are already computed):
 ```bash
@@ -98,18 +97,18 @@ We recommend the following:
 ```bash
 # Snakemake sometimes gets confused about which files it needs to rerun and this forces
 # not to rerun any existing file
-snakemake --cores all <path> --touch
+uv run snakemake --cores all <path> --touch
 # to output an execution plan
-snakemake --cores all <path> --dry-run
+uv run snakemake --cores all <path> --dry-run
 ```
 To evaluate your own set of model features, place a dataframe of shape `n_variants,n_features` in `results/dataset/{dataset}/features/{features}.parquet`.
 For zero-shot evaluation of column `{feature}` and sign `{sign}` (`plus` or `minus`), you would invoke:
 ```bash
-snakemake --cores all results/dataset/{dataset}/{metric}/all/{features}.{sign}.{feature}.csv
+uv run snakemake --cores all results/dataset/{dataset}/{metric}/all/{features}.{sign}.{feature}.csv
 ```
 To train and evaluate a logistic regression model, you would invoke:
 ```bash
-snakemake --cores all results/dataset/{dataset}/{metric}/all/{feature_set}.LogisticRegression.chrom.csv
+uv run snakemake --cores all results/dataset/{dataset}/{metric}/all/{feature_set}.LogisticRegression.chrom.csv
 ```
 where `{feature_set}` should first be defined in `feature_sets` in `config/config.yaml` (this allows combining features defined in different files).
 
