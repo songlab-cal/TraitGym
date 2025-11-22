@@ -98,6 +98,29 @@ def add_tss(V: pl.DataFrame, tss: pl.DataFrame) -> pl.DataFrame:
     return pl.from_pandas(V_pd)
 
 
+def add_exon(V: pl.DataFrame, exon: pl.DataFrame) -> pl.DataFrame:
+    """Add exon_dist column with distance to nearest exon.
+
+    Also overrides consequence to "exon_proximal" for intron_variant
+    within exon_proximal_dist of an exon.
+    """
+    V_pd = V.to_pandas()
+    exon_pd = exon.to_pandas()
+    V_pd["start"] = V_pd.pos - 1
+    V_pd["end"] = V_pd.pos
+    V_pd = (
+        bf.closest(V_pd, exon_pd)
+        .rename(columns={"distance": "exon_dist", "gene_id_": "exon_closest_gene_id"})
+        .drop(columns=["start", "end", "chrom_", "start_", "end_"])
+    )
+    exon_proximal_dist = config["exon_proximal_dist"]
+    mask = (V_pd.consequence == "intron_variant") & (
+        V_pd.exon_dist <= exon_proximal_dist
+    )
+    V_pd.loc[mask, "consequence"] = "exon_proximal"
+    return pl.from_pandas(V_pd)
+
+
 def filter_snp(V: pd.DataFrame) -> pd.DataFrame:
     return V[V.ref.isin(NUCLEOTIDES) & V.alt.isin(NUCLEOTIDES)]
 
