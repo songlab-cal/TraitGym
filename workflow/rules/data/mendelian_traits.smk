@@ -93,9 +93,9 @@ rule mendelian_traits_add_additional_features:
         cre = pl.read_parquet(input[1])
         tss = pl.read_parquet(input[2])
         exon = pl.read_parquet(input[3])
-        V = add_cre(V, cre)
         V = add_tss(V, tss)
         V = add_exon(V, exon)
+        V = add_cre(V, cre)
         V.write_parquet(output[0])
 
 

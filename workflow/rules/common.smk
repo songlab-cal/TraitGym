@@ -211,6 +211,10 @@ rule get_exon:
         annotation = load_table(input[0])
         exon = annotation.query('feature=="exon"').copy()
         exon["gene_id"] = exon.attribute.str.extract(r'gene_id "([^;]*)";')
+        exon["transcript_biotype"] = exon.attribute.str.extract(
+            r'transcript_biotype "([^;]*)";'
+        )
+        exon = exon[exon.transcript_biotype == "protein_coding"]
         exon = exon[["chrom", "start", "end", "gene_id"]].drop_duplicates()
         exon = exon[exon.chrom.isin(CHROMS)]
         exon = exon.sort_values(["chrom", "start", "end"])
