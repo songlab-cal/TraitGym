@@ -77,6 +77,27 @@ select_omim_traits = (
 tissues = pd.read_csv("config/gtex_tissues.txt", header=None).values.ravel()
 
 
+def add_tss(V: pl.DataFrame, tss: pl.DataFrame) -> pl.DataFrame:
+    """Add tss_dist column with distance to nearest TSS.
+
+    Also overrides consequence to "tss_proximal" for non-exonic variants
+    within tss_proximal_dist of a TSS.
+    """
+    V_pd = V.to_pandas()
+    tss_pd = tss.to_pandas()
+    V_pd["start"] = V_pd.pos - 1
+    V_pd["end"] = V_pd.pos
+    V_pd = (
+        bf.closest(V_pd, tss_pd)
+        .rename(columns={"distance": "tss_dist", "gene_id_": "tss_closest_gene_id"})
+        .drop(columns=["start", "end", "chrom_", "start_", "end_"])
+    )
+    tss_proximal_dist = config["tss_proximal_dist"]
+    mask = V_pd.consequence.isin(NON_EXONIC_FULL) & (V_pd.tss_dist <= tss_proximal_dist)
+    V_pd.loc[mask, "consequence"] = "tss_proximal"
+    return pl.from_pandas(V_pd)
+
+
 def filter_snp(V: pd.DataFrame) -> pd.DataFrame:
     return V[V.ref.isin(NUCLEOTIDES) & V.alt.isin(NUCLEOTIDES)]
 

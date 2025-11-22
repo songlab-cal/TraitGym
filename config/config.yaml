@@ -1,6 +1,8 @@
 genome_url: "http://ftp.ensembl.org/pub/release-107/fasta/homo_sapiens/dna/Homo_sapiens.GRCh38.dna_sm.primary_assembly.fa.gz"
 annotation_url: "http://ftp.ensembl.org/pub/release-107/gtf/homo_sapiens/Homo_sapiens.GRCh38.107.chr.gtf.gz"
 
+tss_proximal_dist: 1000
+
 clinvar:
   # not sure how exactly to match these two, since one is weekly and the other is monthly
   release: 20251019
