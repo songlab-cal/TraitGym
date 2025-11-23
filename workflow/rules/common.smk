@@ -42,9 +42,21 @@ NON_EXONIC = [
     "downstream_gene_variant",
 ]
 
-cre_classes = ["PLS", "pELS", "dELS", "DNase-H3K4me3", "CTCF-only"]
-cre_flank_classes = [f"{c}_flank" for c in cre_classes]
-NON_EXONIC_FULL = NON_EXONIC + cre_classes + cre_flank_classes
+# order is important since it will determine which flank gets priority
+# following order in https://screen.wenglab.org/about
+# roughly from most evidence of functional importance to least
+CRE_CLASSES = [
+    "PLS",
+    "pELS",
+    "dELS",
+    "CA-H3K4me3",
+    "CA-CTCF",
+    "CA-TF",
+    "CA",
+    "TF",
+]
+CRE_FLANK_CLASSES = [f"{c}_flank" for c in CRE_CLASSES]
+NON_EXONIC_FULL = NON_EXONIC + CRE_CLASSES + CRE_FLANK_CLASSES
 other_consequences = [
     "missense_variant",
     "non_coding_transcript_exon_variant",
@@ -93,7 +105,9 @@ def add_tss(V: pl.DataFrame, tss: pl.DataFrame) -> pl.DataFrame:
         .drop(columns=["start", "end", "chrom_", "start_", "end_"])
     )
     tss_proximal_dist = config["tss_proximal_dist"]
-    mask = V_pd.consequence.isin(NON_EXONIC_FULL) & (V_pd.tss_dist <= tss_proximal_dist)
+    mask = V_pd.original_consequence.isin(NON_EXONIC) & (
+        V_pd.tss_dist <= tss_proximal_dist
+    )
     V_pd.loc[mask, "consequence"] = "tss_proximal"
     return pl.from_pandas(V_pd)
 
@@ -114,10 +128,46 @@ def add_exon(V: pl.DataFrame, exon: pl.DataFrame) -> pl.DataFrame:
         .drop(columns=["start", "end", "chrom_", "start_", "end_"])
     )
     exon_proximal_dist = config["exon_proximal_dist"]
-    mask = (V_pd.consequence == "intron_variant") & (
+    mask = (V_pd.original_consequence == "intron_variant") & (
         V_pd.exon_dist <= exon_proximal_dist
     )
     V_pd.loc[mask, "consequence"] = "exon_proximal"
+    return pl.from_pandas(V_pd)
+
+
+def add_cre(V: pl.DataFrame, cre: pl.DataFrame) -> pl.DataFrame:
+    """Add CRE-based consequence annotations.
+
+    For non-exonic variants, updates consequence to CRE class or CRE flank
+    based on overlap with cis-regulatory elements.
+    Requires original_consequence column to be present.
+    """
+    V_pd = V.to_pandas()
+    cre_pd = cre.to_pandas()
+
+    V_pd["start"] = V_pd.pos - 1
+    V_pd["end"] = V_pd.pos
+
+    # First assign flank classes (expanded by 500bp)
+    # Process in reverse order so higher priority classes override
+    for c in reversed(CRE_CLASSES):
+        I = cre_pd[cre_pd.cre_class == c]
+        I = bf.expand(I, pad=config["cre_flank_dist"])
+        I = bf.merge(I).drop(columns="n_intervals")
+        V_pd = bf.coverage(V_pd, I)
+        mask = V_pd.original_consequence.isin(NON_EXONIC) & (V_pd.coverage > 0)
+        V_pd.loc[mask, "consequence"] = f"{c}_flank"
+        V_pd = V_pd.drop(columns=["coverage"])
+
+    # Then assign main CRE classes (overriding flanks)
+    for c in reversed(CRE_CLASSES):
+        I = cre_pd[cre_pd.cre_class == c]
+        V_pd = bf.coverage(V_pd, I)
+        mask = V_pd.original_consequence.isin(NON_EXONIC) & (V_pd.coverage > 0)
+        V_pd.loc[mask, "consequence"] = c
+        V_pd = V_pd.drop(columns=["coverage"])
+
+    V_pd = V_pd.drop(columns=["start", "end"])
     return pl.from_pandas(V_pd)
 
 
@@ -226,7 +276,7 @@ rule get_tss:
     input:
         "results/annotation.gtf.gz",
     output:
-        "results/tss.parquet",
+        "results/intervals/tss.parquet",
     run:
         annotation = load_table(input[0])
         tx = annotation.query('feature=="transcript"').copy()
@@ -250,7 +300,7 @@ rule get_exon:
     input:
         "results/annotation.gtf.gz",
     output:
-        "results/exon.parquet",
+        "results/intervals/exon.parquet",
     run:
         annotation = load_table(input[0])
         exon = annotation.query('feature=="exon"').copy()
@@ -357,37 +407,6 @@ rule process_ensembl_vep:
         ).drop("variant")
         V = V.join(V2, on=COORDINATES, how="left", maintain_order="left")
         V.write_parquet(output[0])
-
-
-rule cre_annotation:
-    input:
-        V="{anything}.annot.parquet",
-        cre_flank=expand("results/intervals/cre_{c}.parquet", c=cre_flank_classes),
-        cre=expand("results/intervals/cre_{c}.parquet", c=cre_classes),
-    output:
-        "{anything}.annot_with_cre.parquet",
-    run:
-        V = pd.read_parquet(input.V)
-        V["start"] = V.pos - 1
-        V["end"] = V.pos
-        # first overlap with CRE flanks, since CRE flank is a superset of CRE
-        for c, path in zip(cre_flank_classes, input.cre_flank):
-            I = pd.read_parquet(path)
-            V = bf.coverage(V, I)
-            V.loc[
-                (V.consequence.isin(NON_EXONIC)) & (V.coverage > 0), "consequence"
-            ] = c
-            V = V.drop(columns=["coverage"])
-        for c, path in zip(cre_classes, input.cre):
-            I = pd.read_parquet(path)
-            V = bf.coverage(V, I)
-            V.loc[
-                (V.consequence.isin(cre_flank_classes)) & (V.coverage > 0),
-                "consequence",
-            ] = c
-            V = V.drop(columns=["coverage"])
-        V = V.drop(columns=["start", "end"])
-        V.to_parquet(output[0], index=False)
 
 
 rule match:
@@ -605,45 +624,6 @@ rule s_het_features:
         new_order = V.pos.values
         assert np.all(original_order == new_order)
         V[["s_het"]].to_parquet(output[0], index=False)
-
-
-rule download_cre:
-    output:
-        temp("results/intervals/cre.tsv"),
-    shell:
-        "wget -O {output} https://downloads.wenglab.org/Registry-V3/GRCh38-cCREs.bed"
-
-
-rule process_cre:
-    input:
-        "results/intervals/cre.tsv",
-    output:
-        general="results/intervals/cre.parquet",
-        specific=expand("results/intervals/cre_{c}.parquet", c=cre_classes),
-    run:
-        df = pd.read_csv(input[0], sep="\t", header=None, usecols=[0, 1, 2, 5]).rename(
-            columns={0: "chrom", 1: "start", 2: "end", 5: "classes"}
-        )
-        df.chrom = df.chrom.str.replace("chr", "")
-        df = filter_chroms(df)
-        for c, path in zip(cre_classes, output.specific):
-            df_c = df[df.classes.str.contains(c)]
-            df_c = bf.merge(df_c).drop(columns="n_intervals")
-            df_c.to_parquet(path, index=False)
-        df = bf.merge(df).drop(columns="n_intervals")
-        df.to_parquet(output.general, index=False)
-
-
-rule cre_flank:
-    input:
-        "results/intervals/cre_{c}.parquet",
-    output:
-        "results/intervals/cre_{c}_flank.parquet",
-    run:
-        I = pd.read_parquet(input[0])
-        I = bf.expand(I, pad=500)
-        I = bf.merge(I).drop(columns="n_intervals")
-        I.to_parquet(output[0], index=False)
 
 
 rule abs_llr:
