@@ -219,7 +219,44 @@ def check_ref_alt(V: pd.DataFrame, genome: Genome) -> pd.DataFrame:
     return V
 
 
-def match_features(pos, neg, continuous_features, categorical_features, k):
+def match_features(
+    pos: pl.DataFrame,
+    neg: pl.DataFrame,
+    continuous_features: list[str],
+    categorical_features: list[str],
+    k: int,
+    scale: bool = True,
+    seed: int | None = 42,
+) -> pl.DataFrame:
+    """Match positive samples to k negative samples based on features.
+
+    For each unique combination of categorical features, finds the k closest
+    negative samples for each positive sample based on continuous features.
+
+    Args:
+        pos: Positive samples DataFrame.
+        neg: Negative samples DataFrame.
+        continuous_features: Columns to use for distance-based matching.
+        categorical_features: Columns for exact matching (grouping).
+        k: Number of negative samples to match per positive sample.
+        scale: Whether to scale continuous features before matching.
+        seed: Random seed for reproducibility.
+
+    Returns:
+        DataFrame with matched samples and match_group column.
+    """
+    # Convert to pandas for internal processing
+    pos = pos.to_pandas()
+    neg = neg.to_pandas()
+
+    # Scale continuous features if requested
+    if scale and len(continuous_features) > 0:
+        scaler = RobustScaler()
+        all_data = pd.concat([pos[continuous_features], neg[continuous_features]])
+        scaler.fit(all_data)
+        pos[continuous_features] = scaler.transform(pos[continuous_features])
+        neg[continuous_features] = scaler.transform(neg[continuous_features])
+
     pos = pos.set_index(categorical_features)
     neg = neg.set_index(categorical_features)
     res_pos = []
@@ -233,11 +270,11 @@ def match_features(pos, neg, continuous_features, categorical_features, k):
             continue
         if len(pos_x) * k > len(neg_x):
             print("WARNING: subsampling positive set")
-            pos_x = pos_x.sample(len(neg_x) // k, random_state=42)
+            pos_x = pos_x.sample(len(neg_x) // k, random_state=seed)
         if len(continuous_features) == 0:
-            neg_x = neg_x.sample(len(pos_x) * k, random_state=42)
+            neg_x = neg_x.sample(len(pos_x) * k, random_state=seed)
         else:
-            neg_x = find_closest(pos_x, neg_x, continuous_features, k)
+            neg_x = _find_closest(pos_x, neg_x, continuous_features, k)
         res_pos.append(pos_x)
         res_neg.append(neg_x)
     res_pos = pd.concat(res_pos, ignore_index=True)
@@ -245,10 +282,13 @@ def match_features(pos, neg, continuous_features, categorical_features, k):
     res_neg = pd.concat(res_neg, ignore_index=True)
     res_neg["match_group"] = np.repeat(res_pos.match_group.values, k)
     res = pd.concat([res_pos, res_neg], ignore_index=True)
-    return res
+    return pl.from_pandas(res)
 
 
-def find_closest(pos, neg, cols, k):
+def _find_closest(
+    pos: pd.DataFrame, neg: pd.DataFrame, cols: list[str], k: int
+) -> pd.DataFrame:
+    """Find k closest negative samples for each positive sample."""
     D = cdist(pos[cols], neg[cols])
     closest = []
     for i in range(len(pos)):
@@ -407,69 +447,6 @@ rule process_ensembl_vep:
         ).drop("variant")
         V = V.join(V2, on=COORDINATES, how="left", maintain_order="left")
         V.write_parquet(output[0])
-
-
-rule match:
-    input:
-        "{anything}.annot.parquet",
-        "results/tss.parquet",
-        "results/exon.parquet",
-    output:
-        "{anything}.annot.matched/test.parquet",
-    run:
-        V = pd.read_parquet(input[0])
-        if "label" not in V.columns:
-            V["label"] = V.pip > 0.9
-
-        V["start"] = V.pos
-        V["end"] = V.start + 1
-
-        tss = pd.read_parquet(input[1], columns=["chrom", "start", "end"])
-        exon = pd.read_parquet(input[2], columns=["chrom", "start", "end"])
-
-        V = (
-            bf.closest(V, tss)
-            .rename(columns={"distance": "tss_dist"})
-            .drop(columns=["chrom_", "start_", "end_"])
-        )
-        V = (
-            bf.closest(V, exon)
-            .rename(columns={"distance": "exon_dist"})
-            .drop(columns=["start", "end", "chrom_", "start_", "end_"])
-        )
-
-        base_match_features = ["maf"]
-
-        consequences = V[V.label].consequence.unique()
-        V_cs = []
-        for c in consequences:
-            print(c)
-            V_c = V[V.consequence == c].copy()
-            if c == "intron_variant":
-                match_features = base_match_features + ["tss_dist", "exon_dist"]
-            elif c in [
-                "intergenic_variant",
-                "downstream_gene_variant",
-                "upstream_gene_variant",
-            ]:
-                match_features = base_match_features + ["tss_dist"]
-            else:
-                match_features = base_match_features
-            for f in match_features:
-                V_c[f"{f}_scaled"] = RobustScaler().fit_transform(
-                    V_c[f].values.reshape(-1, 1)
-                )
-            print(V_c.label.value_counts())
-            V_c = match_columns(V_c, "label", [f"{f}_scaled" for f in match_features])
-            V_c["match_group"] = c + "_" + V_c.match_group.astype(str)
-            print(V_c.label.value_counts())
-            print(V_c.groupby("label")[match_features].median())
-            V_c.drop(columns=[f"{f}_scaled" for f in match_features], inplace=True)
-            V_cs.append(V_c)
-        V = pd.concat(V_cs, ignore_index=True)
-        V = sort_chrom_pos(V)
-        print(V)
-        V.to_parquet(output[0], index=False)
 
 
 rule upload_features_to_hf:
