@@ -249,13 +249,18 @@ def match_features(
     pos = pos.to_pandas()
     neg = neg.to_pandas()
 
-    # Scale continuous features if requested
+    # Scale continuous features if requested, storing in separate columns
     if scale and len(continuous_features) > 0:
         scaler = RobustScaler()
         all_data = pd.concat([pos[continuous_features], neg[continuous_features]])
         scaler.fit(all_data)
-        pos[continuous_features] = scaler.transform(pos[continuous_features])
-        neg[continuous_features] = scaler.transform(neg[continuous_features])
+        scaled_features = [f"{c}_scaled" for c in continuous_features]
+        pos[scaled_features] = scaler.transform(pos[continuous_features])
+        neg[scaled_features] = scaler.transform(neg[continuous_features])
+        match_features_cols = scaled_features
+    else:
+        match_features_cols = continuous_features
+        scaled_features = []
 
     pos = pos.set_index(categorical_features)
     neg = neg.set_index(categorical_features)
@@ -274,7 +279,7 @@ def match_features(
         if len(continuous_features) == 0:
             neg_x = neg_x.sample(len(pos_x) * k, random_state=seed)
         else:
-            neg_x = _find_closest(pos_x, neg_x, continuous_features, k)
+            neg_x = _find_closest(pos_x, neg_x, match_features_cols, k)
         res_pos.append(pos_x)
         res_neg.append(neg_x)
     res_pos = pd.concat(res_pos, ignore_index=True)
@@ -282,6 +287,9 @@ def match_features(
     res_neg = pd.concat(res_neg, ignore_index=True)
     res_neg["match_group"] = np.repeat(res_pos.match_group.values, k)
     res = pd.concat([res_pos, res_neg], ignore_index=True)
+    # Drop temporary scaled columns
+    if scaled_features:
+        res = res.drop(columns=scaled_features)
     return pl.from_pandas(res)
 
 

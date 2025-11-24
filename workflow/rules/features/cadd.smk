@@ -1,28 +1,3 @@
-# the code below is adapted from https://github.com/songlab-cal/gpn/blob/main/analysis/gpn-msa_human/workflow/rules/cadd.smk
-cadd_base_dir = "/global/scratch/projects/fc_songlab/gbenegas/projects/gpn/analysis/human/results/cadd1.7/"
-
-
-rule run_vep_cadd_in_memory:
-    input:
-        "results/dataset/{dataset}/test.parquet",
-        expand(cadd_base_dir + "chrom/{chrom}.parquet", chrom=CHROMS),
-    output:
-        "results/dataset/{dataset}/features/CADD_RawScore.parquet",
-    threads: workflow.cores
-    run:
-        V = pl.read_parquet(input[0], columns=COORDINATES)
-        preds = pl.concat(
-            [
-                pl.read_parquet(path).join(V, on=COORDINATES, how="inner")
-                for path in tqdm(input[1:])
-            ]
-        )
-        V = V.join(preds, on=COORDINATES, how="left")
-        V = V.with_columns(-pl.col("score"))  # undo the negation
-        print(V)
-        V.select("score").write_parquet(output[0])
-
-
 rule cadd_download_train_pos:
     output:
         "results/cadd/train_pos.vcf.gz",

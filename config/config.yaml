@@ -28,7 +28,7 @@ consequences:
 
 datasets:
   - mendelian_traits_matched_9
-  - complex_traits_matched_9
+  # - complex_traits_matched_9
 
 consequence_subsets:
   - non_coding_transcript_exon_variant

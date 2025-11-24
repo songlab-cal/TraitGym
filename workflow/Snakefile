@@ -27,6 +27,7 @@ include: "rules/features/grelu.smk"
 include: "rules/features/hyenadna.smk"
 include: "rules/features/maf.smk"
 include: "rules/features/nucleotide_transformer.smk"
+include: "rules/features/precomputed.smk"
 include: "rules/features/sei.smk"
 include: "rules/features/specieslm.smk"
 include: "rules/model.smk"
@@ -40,8 +41,8 @@ rule all:
             features=[
                 # "Enformer_L2",
                 # "Borzoi_L2",
-                # "CADD",
-                # "GPN-MSA_LLR",
+                "CADD",
+                "GPN-MSA_LLR",
                 # "GPN-MSA_InnerProducts",
                 # "GPN-MSA_Embeddings",
                 # "NucleotideTransformer_LLR",
@@ -55,7 +56,21 @@ rule all:
                 # "Caduceus_InnerProducts",
                 # "Caduceus_Embeddings",
                 # "AlphaGenome",
-                "AlphaGenome_L2",
+                # "AlphaGenome_L2",
+            ],
+        ),
+
+
+rule experiment1:
+    input:
+        expand(
+            "results/dataset/{dataset}/{metric}/{subset}/{model}.csv",
+            dataset=["mendelian_traits_matched_9"],
+            metric=["AUPRC"],
+            subset=["all"],
+            model=[
+                "CADD.plus.score",
+                "GPN-MSA_LLR.minus.score",
             ],
         ),
 
@@ -68,10 +83,10 @@ rule glm_unsupervised:
             metric=[
                 # "AUPRC_by_chrom_weighted_average",
                 # "AUROC_by_chrom_weighted_average",
-                # "AUPRC",
-                "OR",
-                "OR_v2",
-                "OR_10%",
+                "AUPRC",
+                # "OR",
+                # "OR_v2",
+                # "OR_10%",
             ],
             subset=["all"],
             model=[
@@ -84,11 +99,11 @@ rule glm_unsupervised:
                 # "AIDO.DNA",
                 # "evo2_1b_base",
                 # "evo2_7b",
-                "evo2_40b",
+                # "evo2_40b",
             ],
             score=[
                 "LLR.minus.score",
-                "absLLR.plus.score",
+                # "absLLR.plus.score",
                 # "Embeddings.plus.euclidean_distance",
                 # "Embeddings.plus.cosine_distance",
                 # "Embeddings.minus.inner_product",
