@@ -20,6 +20,7 @@ rule precomputed_download_gpn_msa:
         """
 
 
+# requires calling snakemake with --use-conda
 rule precomputed_extract_chrom:
     input:
         "results/precomputed/{model}.tsv.gz",
@@ -28,8 +29,10 @@ rule precomputed_extract_chrom:
     wildcard_constraints:
         chrom="|".join(CHROMS),
         model="CADD|GPN-MSA_LLR",
-    shell:
-        "tabix {input} {wildcards.chrom} > {output}"
+    params:
+        region="{chrom}",
+    wrapper:
+        "v7.3.0/bio/tabix/query"
 
 
 rule precomputed_process_chrom_gpn_msa:

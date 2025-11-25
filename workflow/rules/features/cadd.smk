@@ -119,49 +119,49 @@ rule cadd_tabix:
         "tabix -h {config[cadd][url]} -R {input} | gzip > {output}"
 
 
-rule cadd_process:
-    input:
-        "results/dataset/{dataset}/test.parquet",
-        "results/dataset/{dataset}/cadd_tabix_res.tsv.gz",
-    output:
-        "results/dataset/{dataset}/features/CADD.parquet",
-    run:
-        V = pd.read_parquet(input[0])
-        original_cols = V.columns
-        df = pd.read_csv(
-            input[1],
-            sep="\t",
-            skiprows=1,
-            dtype={"#Chrom": "str"},
-            na_values=["."],
-        )
-        df = df.rename(
-            columns={"#Chrom": "chrom", "Pos": "pos", "Ref": "ref", "Alt": "alt"}
-        )
-        # some variants have separate rows for AnnoType = Transcript vs. Intergenic
-        df = df.drop_duplicates(COORDINATES)
-        features = config["cadd"]["features"]
-        df = df[COORDINATES + features]
-        V = V.merge(df, how="left", on=COORDINATES).drop(columns=original_cols)
-        print(V)
-
-
-        def get_default(feature):
-            try:
-                return trackData[feature.lower()]["na_value"]
-            except:
-                return None
-
-
-        for feature in features:
-            default = get_default(feature)
-            if default is not None:
-                V[feature] = V[feature].fillna(default)
-
-        V = V.dropna(axis=1, how="all")
-        V = V.loc[:, df.nunique() > 1]
-        print(V)
-        V.to_parquet(output[0], index=False)
+# rule cadd_process:
+#     input:
+#         "results/dataset/{dataset}/test.parquet",
+#         "results/dataset/{dataset}/cadd_tabix_res.tsv.gz",
+#     output:
+#         "results/dataset/{dataset}/features/CADD.parquet",
+#     run:
+#         V = pd.read_parquet(input[0])
+#         original_cols = V.columns
+#         df = pd.read_csv(
+#             input[1],
+#             sep="\t",
+#             skiprows=1,
+#             dtype={"#Chrom": "str"},
+#             na_values=["."],
+#         )
+#         df = df.rename(
+#             columns={"#Chrom": "chrom", "Pos": "pos", "Ref": "ref", "Alt": "alt"}
+#         )
+#         # some variants have separate rows for AnnoType = Transcript vs. Intergenic
+#         df = df.drop_duplicates(COORDINATES)
+#         features = config["cadd"]["features"]
+#         df = df[COORDINATES + features]
+#         V = V.merge(df, how="left", on=COORDINATES).drop(columns=original_cols)
+#         print(V)
+#
+#
+#         def get_default(feature):
+#             try:
+#                 return trackData[feature.lower()]["na_value"]
+#             except:
+#                 return None
+#
+#
+#         for feature in features:
+#             default = get_default(feature)
+#             if default is not None:
+#                 V[feature] = V[feature].fillna(default)
+#
+#         V = V.dropna(axis=1, how="all")
+#         V = V.loc[:, df.nunique() > 1]
+#         print(V)
+#         V.to_parquet(output[0], index=False)
 
 
 ##################################################################################
