@@ -26,6 +26,13 @@ consequences:
   - splice_donor_region_variant
   - splice_polypyrimidine_tract_variant
 
+splicing_consequences:
+  - splice_donor_5th_base_variant
+  - splice_region_variant
+  - splice_donor_region_variant
+  - splice_polypyrimidine_tract_variant
+  - exon_proximal
+
 datasets:
   - mendelian_traits_matched_9
   # - complex_traits_matched_9
@@ -34,8 +41,9 @@ consequence_subsets:
   - non_coding_transcript_exon_variant
   - 3_prime_UTR_variant
   - 5_prime_UTR_variant
-  - nonexonic_AND_proximal
-  - nonexonic_AND_distal
+  - tss_proximal
+  - splicing
+  - nonexonic_distal
 
 complex_traits_disease:
   - AFib

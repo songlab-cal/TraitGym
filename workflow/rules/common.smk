@@ -57,18 +57,6 @@ CRE_CLASSES = [
 ]
 CRE_FLANK_CLASSES = [f"{c}_flank" for c in CRE_CLASSES]
 NON_EXONIC_FULL = NON_EXONIC + CRE_CLASSES + CRE_FLANK_CLASSES
-other_consequences = [
-    "missense_variant",
-    "non_coding_transcript_exon_variant",
-    "3_prime_UTR_variant",
-    "5_prime_UTR_variant",
-]
-
-TARGET_CONSEQUENCES = NON_EXONIC_FULL + [
-    "5_prime_UTR_variant",
-    "3_prime_UTR_variant",
-    "non_coding_transcript_exon_variant",
-]
 
 select_gwas_traits = (
     pd.read_csv("config/gwas/independent_traits_filtered.csv", header=None)
@@ -475,71 +463,6 @@ rule upload_features_to_hf:
         )
 
 
-def predict(clf, X):
-    return clf.predict_proba(X)[:, 1]
-
-
-def train_predict(V_train, V_test, features, train_f):
-    clf = train_f(V_train[features], V_train.label, V_train.chrom)
-    return predict(clf, V_test[features])
-
-
-def train_logistic_regression(X, y, groups):
-    pipeline = Pipeline(
-        [
-            (
-                "imputer",
-                SimpleImputer(
-                    missing_values=np.nan,
-                    strategy="mean",
-                    keep_empty_features=True,
-                ),
-            ),
-            ("scaler", StandardScaler()),
-            (
-                "linear",
-                LogisticRegression(
-                    class_weight="balanced",
-                    random_state=42,
-                ),
-            ),
-        ]
-    )
-    Cs = np.logspace(-8, 0, 10)
-    param_grid = {
-        "linear__C": Cs,
-    }
-    clf = GridSearchCV(
-        pipeline,
-        param_grid,
-        scoring="average_precision",
-        cv=GroupKFold(),
-        n_jobs=-1,
-    )
-    clf.fit(X, y, groups=groups)
-    print(f"{clf.best_params_=}")
-    linear = clf.best_estimator_.named_steps["linear"]
-    coef = pd.DataFrame(
-        {
-            "feature": X.columns,
-            "coef": linear.coef_[0],
-        }
-    ).sort_values("coef", ascending=False, key=abs)
-    print(coef.head(10))
-    return clf
-
-
-classifier_map = {
-    "LogisticRegression": train_logistic_regression,
-    # "BestFeature": train_best_feature,
-    # "RandomForest": train_random_forest,
-    # "XGBoost": train_xgboost,
-    # "PCALogisticRegression": train_pca_logistic_regression,
-    # "FeatureSelectionLogisticRegression": train_feature_selection_logistic_regression,
-    # "RidgeRegression": train_ridge_regression,
-}
-
-
 def format_number(num):
     """
     Converts a number into a more readable format, using K for thousands, M for millions, etc.
@@ -557,58 +480,6 @@ def format_number(num):
         return f"{num/1e3:.1f}K"
     else:
         return str(num)
-
-
-rule download_s_het:
-    output:
-        "results/s_het.xlsx",
-    shell:
-        "wget -O {output} https://static-content.springer.com/esm/art%3A10.1038%2Fs41588-024-01820-9/MediaObjects/41588_2024_1820_MOESM4_ESM.xlsx"
-
-
-rule process_s_het:
-    input:
-        "results/s_het.xlsx",
-    output:
-        "results/s_het.parquet",
-    run:
-        df = pl.read_excel(input[0], sheet_name="Supplementary Table 1").to_pandas()
-        df = df[["ensg", "post_mean"]].rename(
-            columns={"ensg": "gene_id", "post_mean": "s_het"}
-        )
-        df.to_parquet(output[0], index=False)
-
-
-rule tss_s_het:
-    input:
-        "results/tss.parquet",
-        "results/s_het.parquet",
-    output:
-        "results/tss_s_het.parquet",
-    run:
-        tss = pd.read_parquet(input[0])
-        s_het = pd.read_parquet(input[1])
-        tss = tss.merge(s_het, on="gene_id", how="inner")
-        tss.to_parquet(output[0], index=False)
-
-
-rule s_het_features:
-    input:
-        "results/dataset/{dataset}/test.parquet",
-        "results/tss_s_het.parquet",
-    output:
-        "results/dataset/{dataset}/features/s_het.parquet",
-    run:
-        V = pd.read_parquet(input[0])
-        original_order = V.pos.values
-        tss = pd.read_parquet(input[1])
-        V["start"] = V.pos - 1
-        V["end"] = V.pos
-        V = bf.closest(V, tss).rename(columns={"s_het_": "s_het"})
-        V = sort_variants(V)
-        new_order = V.pos.values
-        assert np.all(original_order == new_order)
-        V[["s_het"]].to_parquet(output[0], index=False)
 
 
 rule abs_llr:
@@ -657,24 +528,6 @@ rule extract_inner_products:
         )
 
 
-rule dataset_subset_defined_alphamissense:
-    input:
-        "results/dataset/{dataset}/test.parquet",
-        "results/dataset/{dataset}/features/AlphaMissense.parquet",
-    output:
-        "results/dataset/{dataset}/subset/defined_alphamissense.parquet",
-    run:
-        V = pd.concat([pd.read_parquet(input[0]), pd.read_parquet(input[1])], axis=1)
-        target_size = len(V[V.match_group == V.match_group.iloc[0]])
-        V = V[V.consequence == "missense_variant"]
-        V = V.dropna(subset="score")
-        match_group_size = V.match_group.value_counts()
-        match_groups = match_group_size[match_group_size == target_size].index
-        V = V[V.match_group.isin(match_groups)]
-        print(V)
-        V[COORDINATES].to_parquet(output[0], index=False)
-
-
 def bootstrap_se(df, stat, n_bootstraps=1000):
     return pl.Series(
         [
@@ -712,131 +565,45 @@ rule dataset_subset_all:
         V[COORDINATES].to_parquet(output[0], index=False)
 
 
-rule dataset_subset_non_missense:
-    input:
-        "results/dataset/{dataset}/test.parquet",
-    output:
-        "results/dataset/{dataset}/subset/non_missense.parquet",
-    run:
-        V = pd.read_parquet(input[0])
-        V = V[V.consequence != "missense_variant"]
-        V[COORDINATES].to_parquet(output[0], index=False)
-
-
-rule dataset_subset_non_coding:
-    input:
-        "results/dataset/{dataset}/test.parquet",
-    output:
-        "results/dataset/{dataset}/subset/non_coding.parquet",
-    run:
-        V = pd.read_parquet(input[0])
-        # these are the ones that appear in our datasets
-        exclude = [
-            "missense_variant",
-            "synonymous_variant",
-            "stop_gained",
-        ]
-        V = V[~V.consequence.isin(exclude)]
-        V[COORDINATES].to_parquet(output[0], index=False)
-
-
-rule dataset_subset_non_coding_v2:
-    input:
-        "results/dataset/{dataset}/test.parquet",
-    output:
-        "results/dataset/{dataset}/subset/non_coding_v2.parquet",
-    run:
-        V = pd.read_parquet(input[0])
-        include = (
-            NON_EXONIC
-            + cre_classes
-            + cre_flank_classes
-            + [
-                "5_prime_UTR_variant",
-                "3_prime_UTR_variant",
-                "non_coding_transcript_exon_variant",
-            ]
-        )
-        V = V[V.consequence.isin(include)]
-        V[COORDINATES].to_parquet(output[0], index=False)
-
-
-rule dataset_subset_nonexonic:
-    input:
-        "results/dataset/{dataset}/test.parquet",
-    output:
-        "results/dataset/{dataset}/subset/nonexonic.parquet",
-    run:
-        V = pd.read_parquet(input[0])
-        V = V[V.consequence.isin(NON_EXONIC + cre_classes + cre_flank_classes)]
-        V[COORDINATES].to_parquet(output[0], index=False)
-
-
 rule dataset_subset_consequence:
     input:
         "results/dataset/{dataset}/test.parquet",
     output:
         "results/dataset/{dataset}/subset/{c}.parquet",
     wildcard_constraints:
-        c="|".join(other_consequences),
+        c="|".join(
+            [
+                "non_coding_transcript_exon_variant",
+                "3_prime_UTR_variant",
+                "5_prime_UTR_variant",
+                "tss_proximal",
+            ]
+        ),
     run:
         V = pd.read_parquet(input[0])
         V = V[V.consequence == wildcards.c]
         V[COORDINATES].to_parquet(output[0], index=False)
 
 
-rule dataset_subset_proximal:
+rule dataset_subset_splicing:
     input:
         "results/dataset/{dataset}/test.parquet",
     output:
-        "results/dataset/{dataset}/subset/proximal.parquet",
+        "results/dataset/{dataset}/subset/splicing.parquet",
     run:
         V = pd.read_parquet(input[0])
-        target_size = len(V[V.match_group == V.match_group.iloc[0]])
-        V = V[(~V.label) | (V.tss_dist <= 1_000)]
-        match_group_size = V.match_group.value_counts()
-        match_groups = match_group_size[match_group_size == target_size].index
-        V = V[V.match_group.isin(match_groups)]
-        print(V.label.value_counts())
+        V = V[V.consequence.isin(config["splicing_consequences"])]
         V[COORDINATES].to_parquet(output[0], index=False)
 
 
-rule dataset_subset_distal:
+rule dataset_subset_nonexonic_distal:
     input:
         "results/dataset/{dataset}/test.parquet",
     output:
-        "results/dataset/{dataset}/subset/distal.parquet",
+        "results/dataset/{dataset}/subset/nonexonic_distal.parquet",
     run:
         V = pd.read_parquet(input[0])
-        target_size = len(V[V.match_group == V.match_group.iloc[0]])
-        V = V[(~V.label) | (V.tss_dist > 1_000)]
-        match_group_size = V.match_group.value_counts()
-        match_groups = match_group_size[match_group_size == target_size].index
-        V = V[V.match_group.isin(match_groups)]
-        print(V.label.value_counts())
-        V[COORDINATES].to_parquet(output[0], index=False)
-
-
-rule dataset_subset_no_cadd_overlap:
-    input:
-        "results/dataset/{dataset}/test.parquet",
-        "results/cadd/train.parquet",
-    output:
-        "results/dataset/{dataset}/subset/no_cadd_overlap.parquet",
-    run:
-        V = pd.read_parquet(input[0])
-        print(V)
-        if "match_group" in V.columns:
-            target_size = len(V[V.match_group == V.match_group.iloc[0]])
-        cadd = pd.read_parquet(input[1])
-        V = V.merge(cadd, on=COORDINATES, how="left")
-        V = V[V.cadd_label.isna()]
-        if "match_group" in V.columns:
-            match_group_size = V.match_group.value_counts()
-            match_groups = match_group_size[match_group_size == target_size].index
-            V = V[V.match_group.isin(match_groups)]
-        print(V)
-        print(V.label.value_counts())
+        V = V[V.consequence.isin(NON_EXONIC_FULL)]
         V[COORDINATES].to_parquet(output[0], index=False)
 
 

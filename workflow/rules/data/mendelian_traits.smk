@@ -115,3 +115,30 @@ rule mendelian_traits_dataset:
             int(wildcards.k),
         )
         V.sort(COORDINATES).write_parquet(output[0])
+
+
+rule mendelian_traits_dataset_match_gene:
+    input:
+        "results/mendelian_traits/unique_additional_features.parquet",
+    output:
+        "results/dataset/mendelian_traits_match_gene_matched_{k,\d+}/test.parquet",
+    run:
+        V = pl.read_parquet(input[0])
+        V = match_features(
+            V.filter(pl.col("label")),
+            V.filter(~pl.col("label")),
+            ["AF", "tss_dist", "exon_dist"],
+            ["chrom", "consequence", "tss_closest_gene_id", "exon_closest_gene_id"],
+            int(wildcards.k),
+        )
+        V.sort(COORDINATES).write_parquet(output[0])
+
+
+rule mendelian_traits_all_dataset:
+    input:
+        "results/mendelian_traits/unique_additional_features.parquet",
+    output:
+        "results/dataset/mendelian_traits_all/test.parquet",
+    run:
+        V = pl.read_parquet(input[0])
+        V.sort(COORDINATES).write_parquet(output[0])
