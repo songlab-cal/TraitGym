@@ -64,19 +64,15 @@ rule all:
 rule experiment1:
     input:
         expand(
-            "results/dataset/{dataset}/{metric}/{subset}/{model}.csv",
+            "results/plots/experiment1/{dataset}/{metric}.png",
             dataset=[
+                "mendelian_traits_matched_99",
                 "mendelian_traits_matched_9",
                 "mendelian_traits_matched_1",
                 "mendelian_traits_match_gene_matched_1",
                 # "mendelian_traits_all",
             ],
             metric=["AUPRC", "AUROC"],
-            subset=["all"],
-            model=[
-                "CADD.plus.score",
-                "GPN-MSA_LLR.minus.score",
-            ],
         ),
 
 

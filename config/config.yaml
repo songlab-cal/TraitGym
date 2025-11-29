@@ -33,6 +33,10 @@ splicing_consequences:
   - splice_polypyrimidine_tract_variant
   - exon_proximal
 
+models_experiment1:
+  - CADD.plus.score
+  - GPN-MSA_LLR.minus.score
+
 datasets:
   - mendelian_traits_matched_9
   # - complex_traits_matched_9
