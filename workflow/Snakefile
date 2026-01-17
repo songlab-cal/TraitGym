@@ -65,15 +65,29 @@ rule all:
 rule experiment1:
     input:
         expand(
-            "results/plots/experiment1/{dataset}/{metric}.png",
+            "results/plots/experiment1/{dataset}/{metric}.svg",
             dataset=[
-                "mendelian_traits_matched_99",
+                # "mendelian_traits_matched_99",
                 "mendelian_traits_matched_9",
                 "mendelian_traits_matched_1",
                 "mendelian_traits_match_gene_matched_1",
                 # "mendelian_traits_all",
             ],
             metric=["AUPRC", "AUROC"],
+        ),
+
+
+rule all_histograms:
+    input:
+        expand(
+            "results/plots/histogram/{dataset}/{model}.svg",
+            dataset=[
+                # "mendelian_traits_matched_99",
+                "mendelian_traits_matched_9",
+                "mendelian_traits_matched_1",
+                "mendelian_traits_match_gene_matched_1",
+            ],
+            model=config["models_experiment1"],
         ),
 
 

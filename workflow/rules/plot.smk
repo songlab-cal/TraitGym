@@ -10,7 +10,7 @@ rule plot_experiment1:
             model=config["models_experiment1"],
         ),
     output:
-        "results/plots/experiment1/{dataset}/{metric}.png",
+        "results/plots/experiment1/{dataset}/{metric}.svg",
     run:
         pos_prop = pd.read_parquet(input[0], columns=["label"]).label.mean()
         dfs = []
@@ -43,5 +43,50 @@ rule plot_experiment1:
         g.set_titles(
             col_template="{col_name}",
         )
+        g.tight_layout()
+        plt.savefig(output[0], bbox_inches="tight")
+
+
+rule plot_histogram:
+    input:
+        "results/dataset/{dataset}/test.parquet",
+        "results/dataset/{dataset}/preds/all/{model}.parquet",
+        expand(
+            "results/dataset/{{dataset}}/subset/{subset}.parquet",
+            subset=EXPERIMENT1_SUBSETS,
+        ),
+    output:
+        "results/plots/histogram/{dataset}/{model}.svg",
+    run:
+        V = pd.read_parquet(input[0])
+        V["score"] = pd.read_parquet(input[1])["score"]
+        dfs = []
+        for subset in EXPERIMENT1_SUBSETS:
+            if subset == "all":
+                df = V.copy()
+            else:
+                subset_df = pd.read_parquet(
+                    f"results/dataset/{wildcards.dataset}/subset/{subset}.parquet"
+                )
+                df = subset_df.merge(V, on=COORDINATES, how="left")
+            df["subset"] = subset
+            dfs.append(df[["score", "label", "subset"]])
+        df = pd.concat(dfs, ignore_index=True)
+        g = sns.displot(
+            data=df,
+            x="score",
+            hue="label",
+            col="subset",
+            col_wrap=3,
+            kind="hist",
+            stat="density",
+            common_norm=False,
+            common_bins=True,
+            bins=40,
+            height=3,
+            aspect=1.0,
+            facet_kws={"sharey": False},
+        )
+        g.set_titles(col_template="{col_name}")
         g.tight_layout()
         plt.savefig(output[0], bbox_inches="tight")
