@@ -681,3 +681,31 @@ rule dataset_to_vcf_gz:
             index=False,
             header=False,
         )
+
+
+rule matched_feature_performance:
+    input:
+        "results/dataset/{dataset}/test.parquet",
+    output:
+        "results/matched_feature_performance/{dataset}.parquet",
+    run:
+        V = pl.read_parquet(input[0])
+
+        # Feature signs: negative means lower value = higher score
+        features = {
+            "AF": -1,  # Lower AF (rarer) = more likely pathogenic
+            "tss_dist": -1,  # Closer to TSS = more likely functional
+            "exon_dist": -1,  # Closer to exon = more likely functional
+        }
+
+        rows = []
+        # Baseline: proportion of positives
+        baseline = V["label"].mean()
+        rows.append({"feature": "baseline", "sign": 0, "AUPRC": baseline})
+
+        # Each feature
+        for feature, sign in features.items():
+            auprc = average_precision_score(V["label"], V[feature] * sign)
+            rows.append({"feature": feature, "sign": sign, "AUPRC": auprc})
+
+        pl.DataFrame(rows).write_parquet(output[0])
