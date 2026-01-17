@@ -4,6 +4,7 @@ wandb
 .snakemake
 results
 CLAUDE.md
+*.sqsh
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

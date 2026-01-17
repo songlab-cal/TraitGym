@@ -31,6 +31,7 @@ include: "rules/features/precomputed.smk"
 include: "rules/features/sei.smk"
 include: "rules/features/specieslm.smk"
 include: "rules/model.smk"
+include: "rules/plot.smk"
 
 
 rule all:
