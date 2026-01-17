@@ -90,3 +90,38 @@ rule plot_histogram:
         g.set_titles(col_template="{col_name}")
         g.tight_layout()
         plt.savefig(output[0], bbox_inches="tight")
+
+
+rule plot_consequence_distribution:
+    input:
+        "results/dataset/{dataset}/test.parquet",
+        expand(
+            "results/dataset/{{dataset}}/subset/{subset}.parquet",
+            subset=config["consequence_subsets"],
+        ),
+    output:
+        "results/plots/consequence_distribution/{dataset}.svg",
+    run:
+        V = pd.read_parquet(input[0]).query("label")
+        total_variants = len(V)
+        V["consequence"] = "Other"
+        for subset in config["consequence_subsets"]:
+            subset_df = pd.read_parquet(
+                f"results/dataset/{wildcards.dataset}/subset/{subset}.parquet"
+            )
+            subset_df["_mask"] = True
+            V = V.drop(columns="_mask", errors="ignore")
+            V = V.merge(
+                subset_df[COORDINATES + ["_mask"]], how="left", on=COORDINATES
+            ).fillna(False)
+            V.loc[V["_mask"], "consequence"] = subset
+        counts = V["consequence"].value_counts()
+        assert (
+            counts.sum() == total_variants
+        ), f"Counts sum {counts.sum()} != total {total_variants}"
+        counts.index = counts.index + " (" + counts.astype(str) + ")"
+        palette = sns.color_palette("Set2", n_colors=len(counts))
+        counts.plot.pie(colors=palette, figsize=(2.0, 2.0), labeldistance=1.3)
+        plt.ylabel("")
+        plt.title(wildcards.dataset)
+        plt.savefig(output[0], bbox_inches="tight")
