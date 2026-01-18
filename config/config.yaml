@@ -36,6 +36,7 @@ splicing_consequences:
 models_experiment1:
   - CADD.plus.score
   - GPN-MSA_LLR.minus.score
+  - PromoterAI.plus.score
 
 datasets:
   - mendelian_traits_matched_9
