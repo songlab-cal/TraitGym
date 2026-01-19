@@ -643,14 +643,3 @@ rule matched_feature_performance_all:
                 "mendelian_traits_match_gene_matched_1",
             ],
         ),
-
-
-rule gpn_star_logits:
-    input:
-        expand(
-            "results/gpn_star/logits/{dataset}/{model}.parquet",
-            # dataset=config["datasets"],
-            # model=list(config["gpn_star"].keys()),
-            dataset=["mendelian_traits_match_gene_matched_1"],
-            model=["M"],
-        ),
