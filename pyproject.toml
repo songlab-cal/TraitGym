@@ -19,6 +19,7 @@ dependencies = [
     "cyvcf2>=0.31.4",
     "openpyxl>=3.1.5",
     "gnomad-db @ git+https://github.com/KalinNonchev/gnomAD_DB.git",
+    "alphagenome>=0.5.1",
 ]
 
 [project.urls]
