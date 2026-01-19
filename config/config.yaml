@@ -36,7 +36,7 @@ splicing_consequences:
 models_experiment1:
   - CADD.plus.score
   - GPN-MSA_LLR.minus.score
-  - PromoterAI.plus.score
+#   - PromoterAI.plus.score
 
 datasets:
   - mendelian_traits_matched_9
@@ -374,3 +374,26 @@ evo2:
     model_path: evo2_40b
     window_size: 8192
     per_device_batch_size: 8  # H200
+
+
+gpn_star:
+  V:
+    model_path: /scratch/users/czye/GPN/egpn/analysis/human/egpn/workflow/results/checkpoints/hg38/fire_1/0.2/multiz100way/100/128/64/True/defined.phastCons100way.percentile-75_0.05_0.001/large/0.1/42/200000/True/True/0.1
+    msa_path: /scratch/users/czye/GPN/egpn/analysis/human/egpn/workflow/results/msa/hg38/multiz100way/100
+    phylo_info_path: /scratch/users/czye/GPN/egpn/analysis/human/egpn/workflow/results/phylo_info/hg38/multiz100way/100/phylo_dist/0.2
+    window_size: 128
+    per_device_batch_size: 128
+
+  M:
+    repo_id: songlab/gpn-star-hg38-m447-200m
+    msa_path: /scratch/users/czye/GPN/egpn/analysis/human/egpn/workflow/results/msa/hg38/cactus447way/447
+    phylo_info_path: /scratch/users/czye/GPN/egpn/analysis/human/egpn/workflow/results/phylo_info/hg38/cactus447way/447/phylo_dist/0.05
+    window_size: 256
+    per_device_batch_size: 128
+
+  P:
+    model_path: /scratch/users/czye/GPN/egpn/analysis/human/egpn/workflow/results/checkpoints/hg38/fire_1/0.05/cactus447way/243/256/128/True/defined.phastCons43way.percentile-75_0.05_0.001/large/0.1/42/200000/True/True/0.2
+    msa_path: /scratch/users/czye/GPN/egpn/analysis/human/egpn/workflow/results/msa/hg38/cactus447way/243
+    phylo_info_path: /scratch/users/czye/GPN/egpn/analysis/human/egpn/workflow/results/phylo_info/hg38/cactus447way/243/phylo_dist/0.05
+    window_size: 256
+    per_device_batch_size: 128

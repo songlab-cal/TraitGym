@@ -23,6 +23,7 @@ include: "rules/features/enformer.smk"
 include: "rules/features/evo2.smk"
 include: "rules/features/gpn.smk"
 include: "rules/features/gpn_msa.smk"
+include: "rules/features/gpn_star.smk"
 include: "rules/features/grelu.smk"
 include: "rules/features/hyenadna.smk"
 include: "rules/features/maf.smk"
@@ -641,4 +642,15 @@ rule matched_feature_performance_all:
                 "mendelian_traits_matched_1",
                 "mendelian_traits_match_gene_matched_1",
             ],
+        ),
+
+
+rule gpn_star_logits:
+    input:
+        expand(
+            "results/gpn_star/logits/{dataset}/{model}.parquet",
+            # dataset=config["datasets"],
+            # model=list(config["gpn_star"].keys()),
+            dataset=["mendelian_traits_match_gene_matched_1"],
+            model=["M"],
         ),
