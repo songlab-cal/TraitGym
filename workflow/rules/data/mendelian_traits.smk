@@ -142,3 +142,10 @@ rule mendelian_traits_all_dataset:
     run:
         V = pl.read_parquet(input[0])
         V.sort(COORDINATES).write_parquet(output[0])
+
+
+rule mendelian_traits_legacy_dataset:
+    output:
+        "results/dataset/mendelian_traits_legacy/test.parquet",
+    shell:
+        "wget -O {output} https://huggingface.co/datasets/songlab/TraitGym/resolve/main/mendelian_traits_matched_9/test.parquet"

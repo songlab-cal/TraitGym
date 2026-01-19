@@ -36,7 +36,10 @@ splicing_consequences:
 models_experiment1:
   - CADD.plus.score
   - GPN-MSA_LLR.minus.score
-  - PromoterAI.plus.score
+  - GPN-Star-V_LLR.minus.llr_calibrated
+  - GPN-Star-M_LLR.minus.llr_calibrated
+  - GPN-Star-P_LLR.minus.llr_calibrated
+#   - PromoterAI.plus.score
 
 datasets:
   - mendelian_traits_matched_9
@@ -374,3 +377,23 @@ evo2:
     model_path: evo2_40b
     window_size: 8192
     per_device_batch_size: 8  # H200
+
+
+gpn_star:
+  V:
+    repo_id: songlab/gpn-star-hg38-v100-200m
+    msa_path: /scratch/users/czye/GPN/egpn/analysis/human/egpn/workflow/results/msa/hg38/multiz100way/100
+    window_size: 128
+    per_device_batch_size: 64
+
+  M:
+    repo_id: songlab/gpn-star-hg38-m447-200m
+    msa_path: /scratch/users/czye/GPN/egpn/analysis/human/egpn/workflow/results/msa/hg38/cactus447way/447
+    window_size: 256
+    per_device_batch_size: 64
+
+  P:
+    repo_id: songlab/gpn-star-hg38-p243-200m
+    msa_path: /scratch/users/czye/GPN/egpn/analysis/human/egpn/workflow/results/msa/hg38/cactus447way/243
+    window_size: 256
+    per_device_batch_size: 64

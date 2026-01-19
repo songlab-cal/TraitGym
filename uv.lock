@@ -807,7 +807,7 @@ dependencies = [
 [[package]]
 name = "gpn"
 version = "0.7"
-source = { git = "https://github.com/songlab-cal/gpn.git#b5cb2be0095841984ea199d2cd671b77796d7dd1" }
+source = { git = "https://github.com/songlab-cal/gpn.git?rev=fallback-phylo-dist-path#9900d9040036b89908ea757c2216198b31c315a9" }
 dependencies = [
     { name = "bioframe" },
     { name = "biopython" },
@@ -2854,7 +2854,7 @@ dev = [
 requires-dist = [
     { name = "cyvcf2", specifier = ">=0.31.4" },
     { name = "gnomad-db", git = "https://github.com/KalinNonchev/gnomAD_DB.git" },
-    { name = "gpn", git = "https://github.com/songlab-cal/gpn.git" },
+    { name = "gpn", git = "https://github.com/songlab-cal/gpn.git?rev=fallback-phylo-dist-path" },
     { name = "huggingface-hub" },
     { name = "liftover" },
     { name = "openpyxl", specifier = ">=3.1.5" },
