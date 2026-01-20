@@ -77,6 +77,9 @@ select_omim_traits = (
 tissues = pd.read_csv("config/gtex_tissues.txt", header=None).values.ravel()
 
 
+subsets = ["all"] + config["consequence_subsets"]
+
+
 def add_tss(V: pl.DataFrame, tss: pl.DataFrame) -> pl.DataFrame:
     """Add tss_dist column with distance to nearest TSS.
 

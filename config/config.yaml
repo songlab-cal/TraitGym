@@ -40,6 +40,8 @@ models_experiment1:
   - GPN-Star-M_LLR.minus.llr_calibrated
   - GPN-Star-P_LLR.minus.llr_calibrated
   - AlphaGenome_L2_max.plus.all
+  - GPN-Star_AlphaGenome
+
 #   - PromoterAI.plus.score
 
 datasets:
@@ -398,3 +400,8 @@ gpn_star:
     msa_path: /scratch/users/czye/GPN/egpn/analysis/human/egpn/workflow/results/msa/hg38/cactus447way/243
     window_size: 256
     per_device_batch_size: 64
+
+ensembles:
+  GPN-Star_AlphaGenome:
+    - GPN-Star-M_LLR.minus.llr_calibrated
+    - AlphaGenome_L2_max.plus.all

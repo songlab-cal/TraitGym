@@ -19,6 +19,26 @@ rule unsupervised_pred:
         V[["score"]].to_parquet(output[0], index=False)
 
 
+rule ensemble_ranks:
+    input:
+        lambda wildcards: expand(
+            "results/dataset/{{dataset}}/preds/{{subset}}/{model}.parquet",
+            model=config["ensembles"][wildcards.ensemble],
+        ),
+    output:
+        "results/dataset/{dataset}/preds/{subset}/{ensemble}.parquet",
+    wildcard_constraints:
+        ensemble="|".join(list(config["ensembles"].keys())),
+    run:
+        def load_score(path: str) -> pd.Series:
+            return -(pd.read_parquet(path)["score"].rank(ascending=False))
+
+
+        df = pd.concat([load_score(path) for path in input], axis=1)
+        df = df.sum(axis=1).to_frame("score")
+        df.to_parquet(output[0], index=False)
+
+
 rule eval_unsupervised_features:
     input:
         "results/dataset/{dataset}/test.parquet",
@@ -63,6 +83,7 @@ rule get_metric:
         "results/dataset/{dataset}/{metric}/{subset}/{model}.csv",
     wildcard_constraints:
         metric="|".join(metric_mapping.keys()),
+        subset="|".join(subsets),
     run:
         metric_name = wildcards.metric
         metric = metric_mapping[metric_name]
