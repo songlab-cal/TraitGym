@@ -233,7 +233,7 @@ def add_cre_fast(V: pl.DataFrame, cre: pl.DataFrame) -> pl.DataFrame:
         .alias("consequence")
     )
 
-    return V.drop(["start", "end", "cre_class"])
+    return V.drop(["start", "end", "cre_class"]).sort(COORDINATES)
 
 
 def filter_snp(V: pd.DataFrame) -> pd.DataFrame:
