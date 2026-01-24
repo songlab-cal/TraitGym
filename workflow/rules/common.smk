@@ -1,4 +1,5 @@
 import bioframe as bf
+import polars_bio as pb
 from cyvcf2 import VCF
 from datasets import load_dataset
 from gpn.data import Genome, load_table, load_dataset_from_file_or_dir
@@ -160,6 +161,79 @@ def add_cre(V: pl.DataFrame, cre: pl.DataFrame) -> pl.DataFrame:
 
     V_pd = V_pd.drop(columns=["start", "end"])
     return pl.from_pandas(V_pd)
+
+
+def add_cre_fast(V: pl.DataFrame, cre: pl.DataFrame) -> pl.DataFrame:
+    """Add CRE-based consequence annotations using polars-bio.
+
+    Faster alternative to add_cre() using Rust-based interval trees.
+    Single-pass overlap vs 16 passes in original implementation.
+    Requires original_consequence column to be present.
+    """
+    # Filter CRE to chromosomes present in variants
+    chroms = V["chrom"].unique()
+    cre = cre.filter(pl.col("chrom").is_in(chroms))
+
+    # Handle case where no CRE intervals overlap with variant chromosomes
+    if cre.is_empty():
+        return V
+
+    # Prepare variant positions as 0-based half-open intervals [pos-1, pos)
+    V = V.with_columns(
+        (pl.col("pos") - 1).alias("start"),
+        pl.col("pos").alias("end"),
+    )
+
+    # Prepare CRE intervals with expanded flanks
+    flank_dist = config["cre_flank_dist"]  # 500bp
+    cre_flank = cre.with_columns(
+        (pl.col("start") - flank_dist).clip(lower_bound=0).alias("start"),
+        (pl.col("end") + flank_dist).alias("end"),
+        (pl.col("cre_class") + "_flank").alias("cre_class"),
+    )
+
+    # Combine core + flank intervals (core has higher priority)
+    cre_combined = pl.concat([cre_flank, cre])
+
+    # Single overlap operation using COITree (O(log n) lookups)
+    # use_zero_based=True for 0-based half-open intervals (BED format)
+    overlaps = pb.overlap(
+        V.select(["chrom", "start", "end"]),
+        cre_combined.select(["chrom", "start", "end", "cre_class"]),
+        suffixes=("", "_cre"),
+        output_type="polars.DataFrame",
+        use_zero_based=True,
+    )
+
+    # Assign consequence based on CRE class priority
+    # Core classes override flank; within each, earlier in CRE_CLASSES = higher priority
+    # Lower priority number = higher priority (will be selected)
+    priority = {c: i for i, c in enumerate(CRE_CLASSES)}
+    priority.update(
+        {f"{c}_flank": i + len(CRE_CLASSES) for i, c in enumerate(CRE_CLASSES)}
+    )
+
+    best_cre = (
+        overlaps.with_columns(
+            pl.col("cre_class_cre").replace_strict(priority).alias("priority")
+        )
+        .group_by(["chrom", "start", "end"])
+        .agg(pl.col("cre_class_cre").sort_by("priority").first().alias("cre_class"))
+    )
+
+    # Join back to variants and update consequence for non-exonic
+    V = V.join(best_cre, on=["chrom", "start", "end"], how="left")
+    V = V.with_columns(
+        pl.when(
+            pl.col("original_consequence").is_in(NON_EXONIC)
+            & pl.col("cre_class").is_not_null()
+        )
+        .then(pl.col("cre_class"))
+        .otherwise(pl.col("consequence"))
+        .alias("consequence")
+    )
+
+    return V.drop(["start", "end", "cre_class"])
 
 
 def filter_snp(V: pd.DataFrame) -> pd.DataFrame:

@@ -20,6 +20,7 @@ dependencies = [
     "openpyxl>=3.1.5",
     "gnomad-db @ git+https://github.com/KalinNonchev/gnomAD_DB.git",
     "alphagenome>=0.5.1",
+    "polars-bio>=0.19.0",
 ]
 
 [project.urls]
