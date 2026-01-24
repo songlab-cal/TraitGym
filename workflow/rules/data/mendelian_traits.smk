@@ -149,3 +149,48 @@ rule mendelian_traits_legacy_dataset:
         "results/dataset/mendelian_traits_legacy/test.parquet",
     shell:
         "wget -O {output} https://huggingface.co/datasets/songlab/TraitGym/resolve/main/mendelian_traits_matched_9/test.parquet"
+
+
+rule mendelian_traits_alt_add_features:
+    input:
+        "results/mendelian_traits/unique.parquet",
+        "results/intervals/cre.parquet",
+        "results/intervals/exon.parquet",
+        "results/intervals/tss.parquet",
+        "results/gnomad/common.annot.parquet",
+    output:
+        "results/mendelian_traits/alt.parquet",
+    run:
+        V = pl.read_parquet(input[0]).filter(pl.col("source") != "roulette")
+        gnomad = (
+            pl.read_parquet(input[4])
+            .filter(pl.col("consequence").is_in(config["consequences"]))
+            .with_columns(source=pl.lit("gnomad"))
+        )
+        V = pl.concat([V, gnomad], how="diagonal_relaxed").sort(COORDINATES)
+
+        V = V.with_columns(original_consequence=pl.col("consequence"))
+        cre = pl.read_parquet(input[1])
+        exon = pl.read_parquet(input[2])
+        tss = pl.read_parquet(input[3])
+        V = add_cre(V, cre)
+        V = add_exon(V, exon)
+        V = add_tss(V, tss)
+        V.write_parquet(output[0])
+
+
+rule mendelian_traits_alt_dataset:
+    input:
+        "results/mendelian_traits/alt.parquet",
+    output:
+        "results/dataset/mendelian_traits_alt_matched_{k,\d+}/test.parquet",
+    run:
+        V = pl.read_parquet(input[0])
+        V = match_features(
+            V.filter(pl.col("label")),
+            V.filter(~pl.col("label")),
+            ["tss_dist", "exon_dist"],
+            ["chrom", "consequence"],
+            int(wildcards.k),
+        )
+        V.sort(COORDINATES).write_parquet(output[0])

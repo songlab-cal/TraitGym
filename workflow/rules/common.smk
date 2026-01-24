@@ -34,7 +34,7 @@ ODD_EVEN_CHROMS = [
     [str(i) for i in range(1, 23, 2)] + ["X"],
     [str(i) for i in range(2, 23, 2)] + ["Y"],
 ]
-CHROMS = [str(i) for i in range(1, 23)]
+CHROMS = [str(i) for i in range(1, 23)] + ["X", "Y"]
 NON_EXONIC = [
     "intergenic_variant",
     "intron_variant",

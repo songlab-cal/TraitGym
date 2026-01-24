@@ -80,3 +80,24 @@ rule simulated_variants_consequence:
             .filter(consequence=wildcards.consequence)
             .write_parquet(output[0])
         )
+
+
+rule simulated_variants_add_cre:
+    input:
+        "results/simulated/chrom/{chrom}.annot.parquet",
+        "results/intervals/cre.parquet",
+    output:
+        "results/simulated/chrom_annot_cre/{chrom}.parquet",
+    threads: workflow.cores
+    run:
+        V = pl.read_parquet(input[0])
+        V = V.with_columns(original_consequence=pl.col("consequence"))
+        cre = pl.read_parquet(input[1])
+        V = add_cre(V, cre)
+        V = V.drop("original_consequence")
+        V.write_parquet(output[0])
+
+
+rule simulated_variants_add_cre_all:
+    input:
+        expand("results/simulated/chrom_annot_cre/{chrom}.parquet", chrom=CHROMS),
