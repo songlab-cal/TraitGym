@@ -91,93 +91,11 @@ rule simulated_variants_add_cre:
     threads: workflow.cores
     run:
         V = pl.read_parquet(input[0])
-        V = V.with_columns(original_consequence=pl.col("consequence"))
         cre = pl.read_parquet(input[1])
         V = add_cre(V, cre)
-        V = V.drop("original_consequence")
         V.write_parquet(output[0])
 
 
 rule simulated_variants_add_cre_all:
     input:
         expand("results/simulated/chrom_annot_cre/{chrom}.parquet", chrom=CHROMS),
-
-
-rule simulated_variants_add_cre_fast:
-    input:
-        "results/simulated/chrom/{chrom}.annot.parquet",
-        "results/intervals/cre.parquet",
-    output:
-        "results/simulated/chrom_annot_cre_fast/{chrom}.parquet",
-    threads: workflow.cores
-    run:
-        V = pl.read_parquet(input[0])
-        V = V.with_columns(original_consequence=pl.col("consequence"))
-        cre = pl.read_parquet(input[1])
-        V = add_cre_fast(V, cre)
-        V = V.drop("original_consequence")
-        V.write_parquet(output[0])
-
-
-rule simulated_variants_add_cre_fast_all:
-    input:
-        expand("results/simulated/chrom_annot_cre_fast/{chrom}.parquet", chrom=CHROMS),
-
-
-rule compare_add_cre_implementations:
-    """Compare old and new add_cre implementations on a random sample."""
-    input:
-        "results/simulated/chrom/Y.annot.parquet",
-        "results/intervals/cre.parquet",
-    output:
-        "results/simulated/cre_comparison.txt",
-    run:
-        import random
-
-        random.seed(42)
-
-        V_full = pl.read_parquet(input[0])
-        print(V_full)
-        cre = pl.read_parquet(input[1])
-        print(cre)
-
-        # Sample 100k variants, then sort for deterministic comparison
-        n_sample = 100_000
-        indices = sorted(random.sample(range(len(V_full)), min(n_sample, len(V_full))))
-        V = V_full[indices]
-        print(V)
-
-        # Run both implementations
-        V_old = V.with_columns(original_consequence=pl.col("consequence"))
-        V_old = add_cre(V_old, cre)
-        V_old = V_old.drop("original_consequence")
-
-        V_new = V.with_columns(original_consequence=pl.col("consequence"))
-        V_new = add_cre_fast(V_new, cre)
-        V_new = V_new.drop("original_consequence")
-
-        # Compare consequence columns by joining on coordinates
-        comparison = (
-            V_old.select(COORDINATES + ["consequence"])
-            .rename({"consequence": "old"})
-            .join(
-                V_new.select(COORDINATES + ["consequence"]).rename(
-                    {"consequence": "new"}
-                ),
-                on=COORDINATES,
-                how="inner",
-            )
-        )
-        match = (comparison["old"] == comparison["new"]).all()
-        n_diff = (comparison["old"] != comparison["new"]).sum()
-
-        with open(output[0], "w") as f:
-            f.write(f"Sample size: {len(V)}\n")
-            f.write(f"Match: {match}\n")
-            f.write(f"Differences: {n_diff}\n")
-            if not match:
-                diff_df = comparison.filter(pl.col("old") != pl.col("new"))
-                f.write("\nFirst 20 differences:\n")
-                f.write(diff_df.head(20).to_pandas().to_string())
-
-        print(f"Match: {match}, Differences: {n_diff}")

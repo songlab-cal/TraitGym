@@ -130,45 +130,7 @@ def add_exon(V: pl.DataFrame, exon: pl.DataFrame) -> pl.DataFrame:
 def add_cre(V: pl.DataFrame, cre: pl.DataFrame) -> pl.DataFrame:
     """Add CRE-based consequence annotations.
 
-    For non-exonic variants, updates consequence to CRE class or CRE flank
-    based on overlap with cis-regulatory elements.
-    Requires original_consequence column to be present.
-    """
-    V_pd = V.to_pandas()
-    cre_pd = cre.to_pandas()
-
-    V_pd["start"] = V_pd.pos - 1
-    V_pd["end"] = V_pd.pos
-
-    # First assign flank classes (expanded by 500bp)
-    # Process in reverse order so higher priority classes override
-    for c in reversed(CRE_CLASSES):
-        I = cre_pd[cre_pd.cre_class == c]
-        I = bf.expand(I, pad=config["cre_flank_dist"])
-        I = bf.merge(I).drop(columns="n_intervals")
-        V_pd = bf.coverage(V_pd, I)
-        mask = V_pd.original_consequence.isin(NON_EXONIC) & (V_pd.coverage > 0)
-        V_pd.loc[mask, "consequence"] = f"{c}_flank"
-        V_pd = V_pd.drop(columns=["coverage"])
-
-    # Then assign main CRE classes (overriding flanks)
-    for c in reversed(CRE_CLASSES):
-        I = cre_pd[cre_pd.cre_class == c]
-        V_pd = bf.coverage(V_pd, I)
-        mask = V_pd.original_consequence.isin(NON_EXONIC) & (V_pd.coverage > 0)
-        V_pd.loc[mask, "consequence"] = c
-        V_pd = V_pd.drop(columns=["coverage"])
-
-    V_pd = V_pd.drop(columns=["start", "end"])
-    return pl.from_pandas(V_pd)
-
-
-def add_cre_fast(V: pl.DataFrame, cre: pl.DataFrame) -> pl.DataFrame:
-    """Add CRE-based consequence annotations using polars-bio.
-
-    Faster alternative to add_cre() using Rust-based interval trees.
-    Single-pass overlap vs 16 passes in original implementation.
-    Requires original_consequence column to be present.
+    Creates consequence_cre column, leaving original consequence unchanged.
     """
     # Filter CRE to chromosomes present in variants
     chroms = V["chrom"].unique()
@@ -176,7 +138,7 @@ def add_cre_fast(V: pl.DataFrame, cre: pl.DataFrame) -> pl.DataFrame:
 
     # Handle case where no CRE intervals overlap with variant chromosomes
     if cre.is_empty():
-        return V
+        return V.with_columns(pl.col("consequence").alias("consequence_cre"))
 
     # Prepare variant positions as 0-based half-open intervals [pos-1, pos)
     V = V.with_columns(
@@ -222,18 +184,21 @@ def add_cre_fast(V: pl.DataFrame, cre: pl.DataFrame) -> pl.DataFrame:
     )
 
     # Join back to variants and update consequence for non-exonic
-    V = V.join(best_cre, on=["chrom", "start", "end"], how="left")
-    V = V.with_columns(
-        pl.when(
-            pl.col("original_consequence").is_in(NON_EXONIC)
-            & pl.col("cre_class").is_not_null()
+    return (
+        V.join(
+            best_cre, on=["chrom", "start", "end"], how="left", maintain_order="left"
         )
-        .then(pl.col("cre_class"))
-        .otherwise(pl.col("consequence"))
-        .alias("consequence")
+        .with_columns(
+            pl.when(
+                pl.col("consequence").is_in(NON_EXONIC)
+                & pl.col("cre_class").is_not_null()
+            )
+            .then(pl.col("cre_class"))
+            .otherwise(pl.col("consequence"))
+            .alias("consequence_cre")
+        )
+        .drop(["start", "end", "cre_class"])
     )
-
-    return V.drop(["start", "end", "cre_class"]).sort(COORDINATES)
 
 
 def filter_snp(V: pd.DataFrame) -> pd.DataFrame:
