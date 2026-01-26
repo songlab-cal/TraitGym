@@ -1,3 +1,7 @@
 clinvar:
   release: 20251019
   submission_summary_url: https://ftp.ncbi.nlm.nih.gov/pub/clinvar/tab_delimited/archive/submission_summary_2025-10.txt.gz
+
+gnomad:
+  min_AN: 25000  # minimum number of samples
+  AF_threshold_common: 0.05  # 5%

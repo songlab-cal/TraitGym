@@ -1,13 +1,21 @@
 rule gnomad_download:
     output:
-        "results/gnomad/common.annot.parquet",
+        "results/gnomad/all.parquet",
+    shell:
+        "wget -O {output} https://huggingface.co/datasets/songlab/gnomad-full/resolve/main/test.parquet"
+
+
+rule gnomad_common:
+    input:
+        "results/gnomad/all.parquet",
+    output:
+        "results/gnomad/common.parquet",
     run:
         (
-            pl.read_parquet(
-                "hf://datasets/songlab/gnomad/test.parquet",
-                columns=COORDINATES + ["label", "consequence"],
+            pl.scan_parquet(input[0])
+            .filter(
+                pl.col("AN") >= config["gnomad"]["min_AN"],
+                pl.col("AF") > config["gnomad"]["AF_threshold_common"],
             )
-            .filter(~pl.col("label"))
-            .with_columns(pl.col("consequence") + "_variant")
-            .write_parquet(output[0])
+            .sink_parquet(output[0])
         )
