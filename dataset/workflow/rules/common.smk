@@ -8,4 +8,5 @@ from traitgym.variants import (
     CHROMS,
     filter_snp,
     filter_chroms,
+    lift_hg19_to_hg38,
 )

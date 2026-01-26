@@ -18,27 +18,21 @@ rule smedley_et_al_process:
     output:
         "results/smedley_et_al/variants.parquet",
     run:
+        # Using pandas for Excel reading (polars Excel support is limited)
         xls = pd.ExcelFile(input[0])
-        sheet_names = xls.sheet_names
-
-        dfs = []
-        for variant_type in sheet_names[1:]:
-            df = pd.read_excel(input[0], sheet_name=variant_type)
-            dfs.append(df)
-        V = pd.concat(dfs)
-        V = V[["Chr", "Position", "Ref", "Alt", "OMIM"]].rename(
-            columns={
-                "Chr": "chrom",
-                "Position": "pos",
-                "Ref": "ref",
-                "Alt": "alt",
-                "OMIM": "trait",
-            }
+        dfs = [pd.read_excel(input[0], sheet_name=name) for name in xls.sheet_names[1:]]
+        V = (
+            pl.from_pandas(pd.concat(dfs))
+            .select(
+                pl.col("Chr").str.replace("chr", "").alias("chrom"),
+                pl.col("Position").alias("pos"),
+                pl.col("Ref").alias("ref"),
+                pl.col("Alt").alias("alt"),
+                pl.col("OMIM").alias("trait"),
+            )
+            .pipe(filter_chroms)
+            .pipe(filter_snp)
+            .pipe(lift_hg19_to_hg38)
+            .filter(pl.col("pos") != -1)
         )
-        V.chrom = V.chrom.str.replace("chr", "")
-        V = filter_chroms(V)
-        V = filter_snp(V)
-        V = lift_hg19_to_hg38(V)
-        V = V[V.pos != -1]
-        V = sort_variants(V)
-        V.to_parquet(output[0], index=False)
+        V.write_parquet(output[0])

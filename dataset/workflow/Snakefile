@@ -3,3 +3,4 @@ configfile: "config/config.yaml"
 
 include: "rules/common.smk"
 include: "rules/clinvar.smk"
+include: "rules/smedley_et_al.smk"
