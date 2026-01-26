@@ -3,7 +3,7 @@ from liftover import get_lifter
 
 COORDINATES = ["chrom", "pos", "ref", "alt"]
 NUCLEOTIDES = list("ACGT")
-CHROMS = [str(i) for i in range(1, 23)] + ["X", "Y"]
+CHROMS = sorted([str(i) for i in range(1, 23)] + ["X", "Y"])
 COMPLEMENT = {"A": "T", "T": "A", "C": "G", "G": "C"}
 
 

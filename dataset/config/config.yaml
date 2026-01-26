@@ -5,3 +5,6 @@ clinvar:
 gnomad:
   min_AN: 25000  # minimum number of samples
   AF_threshold_common: 0.05  # 5%
+
+mendelian_traits:
+  AF_threshold: 0.001  # 0.1%
