@@ -21,7 +21,7 @@ rule smedley_et_al_process:
         # Using pandas for Excel reading (polars Excel support is limited)
         xls = pd.ExcelFile(input[0])
         dfs = [pd.read_excel(input[0], sheet_name=name) for name in xls.sheet_names[1:]]
-        V = (
+        (
             pl.from_pandas(pd.concat(dfs))
             .select(
                 pl.col("Chr").str.replace("chr", "").alias("chrom"),
@@ -34,5 +34,6 @@ rule smedley_et_al_process:
             .pipe(filter_snp)
             .pipe(lift_hg19_to_hg38)
             .filter(pl.col("pos") != -1)
+            .sort(COORDINATES)
+            .write_parquet(output[0])
         )
-        V.write_parquet(output[0])

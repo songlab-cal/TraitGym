@@ -14,27 +14,24 @@ rule hgmd_download:
 rule hgmd_process:
     input:
         "results/hgmd/variants.csv",
-        "results/genome.fa.gz",
     output:
         "results/hgmd/variants.parquet",
     run:
-        V = pd.read_csv(
-            input[0], usecols=["CHROM_hg19", "POS_hg19", "REF", "ALT", "phenotype"]
-        ).rename(
-            columns={
-                "CHROM_hg19": "chrom",
-                "POS_hg19": "pos",
-                "REF": "ref",
-                "ALT": "alt",
-                "phenotype": "trait",
-            }
+        (
+            pl.read_csv(
+                input[0], columns=["CHROM_hg19", "POS_hg19", "REF", "ALT", "phenotype"]
+            )
+            .select(
+                pl.col("CHROM_hg19").str.replace("chr", "").alias("chrom"),
+                pl.col("POS_hg19").alias("pos"),
+                pl.col("REF").alias("ref"),
+                pl.col("ALT").alias("alt"),
+                pl.col("phenotype").alias("trait"),
+            )
+            .pipe(filter_chroms)
+            .pipe(filter_snp)
+            .pipe(lift_hg19_to_hg38)
+            .filter(pl.col("pos") != -1)
+            .sort(COORDINATES)
+            .write_parquet(output[0])
         )
-        V.chrom = V.chrom.str.replace("chr", "")
-        V = filter_chroms(V)
-        V = filter_snp(V)
-        V = lift_hg19_to_hg38(V)
-        V = V[V.pos != -1]
-        genome = Genome(input[1])
-        V = check_ref_alt(V, genome)
-        V = sort_variants(V)
-        V.to_parquet(output[0], index=False)

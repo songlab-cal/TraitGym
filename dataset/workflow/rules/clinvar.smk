@@ -37,6 +37,7 @@ rule clinvar_process:
             pl.DataFrame(rows, schema=COORDINATES + ["clinvar_id"], orient="row")
             .pipe(filter_snp)
             .pipe(filter_chroms)
+            .sort(COORDINATES)
             .write_parquet(output[0])
         )
 
@@ -111,5 +112,5 @@ rule clinvar_omim:
     run:
         V = pl.read_parquet(input[0])
         df = pl.read_parquet(input[1])
-        V = V.join(df, on="clinvar_id", how="inner", maintain_order="left")
+        V = V.join(df, on="clinvar_id", how="inner").sort(COORDINATES)
         V.write_parquet(output[0])
