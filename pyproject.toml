@@ -1,3 +1,7 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
 [project]
 name = "traitgym"
 version = "0.1.0"
@@ -15,10 +19,9 @@ dependencies = [
     "scikit-learn",
     "huggingface-hub",
     "liftover",
-    "gpn @ git+https://github.com/songlab-cal/gpn.git@fallback-phylo-dist-path",
+    "gpn @ git+https://github.com/songlab-cal/gpn.git",
     "cyvcf2>=0.31.4",
     "openpyxl>=3.1.5",
-    "gnomad-db @ git+https://github.com/KalinNonchev/gnomAD_DB.git",
     "alphagenome>=0.5.1",
     "polars-bio>=0.19.0",
 ]
@@ -26,10 +29,17 @@ dependencies = [
 [project.urls]
 Homepage = "https://github.com/songlab-cal/TraitGym"
 
+[tool.hatch.metadata]
+allow-direct-references = true
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/traitgym"]
+
 [tool.snakefmt]
 include = '\.smk$|^Snakefile|\.py$'
 
 [dependency-groups]
 dev = [
     "pre-commit",
+    "pytest",
 ]
