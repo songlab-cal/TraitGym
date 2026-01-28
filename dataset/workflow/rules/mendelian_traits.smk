@@ -24,10 +24,9 @@ rule mendelian_traits_positives:
             # priority: clinvar, smedley et al, hgmd
             .unique(COORDINATES, keep="first", maintain_order=True)
             .join(gnomad, on=COORDINATES, how="left")
-            # variants not in gnomAD are assumed to have AF = 0
-            .filter(
-                pl.col("AF").fill_null(0) < config["mendelian_traits"]["AF_threshold"]
-            )
+            # variants not in gnomAD are assigned AF = 0
+            .with_columns(pl.col("AF").fill_null(0))
+            .filter(pl.col("AF") < config["mendelian_traits"]["AF_threshold"])
             .sort(COORDINATES)
         )
         results = []
