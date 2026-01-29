@@ -74,7 +74,8 @@ rule mendelian_traits_dataset_all:
                 [
                     pl.read_parquet(input[0]).with_columns(label=pl.lit(True)),
                     pl.read_parquet(input[1]).with_columns(label=pl.lit(False)),
-                ]
+                ],
+                how="diagonal_relaxed",
             )
             .filter(~pl.col("consequence").is_in(config["exclude_consequences"]))
             # order is important, tss_proximal overrides exon_proximal
