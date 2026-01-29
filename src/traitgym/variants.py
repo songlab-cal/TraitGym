@@ -5,6 +5,12 @@ COORDINATES = ["chrom", "pos", "ref", "alt"]
 NUCLEOTIDES = list("ACGT")
 CHROMS = sorted([str(i) for i in range(1, 23)] + ["X", "Y"])
 COMPLEMENT = {"A": "T", "T": "A", "C": "G", "G": "C"}
+NON_EXONIC = [
+    "intergenic_variant",
+    "intron_variant",
+    "upstream_gene_variant",
+    "downstream_gene_variant",
+]
 
 
 def reverse_complement(seq: str) -> str:

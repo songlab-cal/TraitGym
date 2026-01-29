@@ -43,88 +43,49 @@ rule mendelian_traits_positives:
         pl.concat(results).write_parquet(output[0])
 
 
-# rule mendelian_traits_merge_sources:
-#     input:
-#         "results/clinvar/omim.parquet",
-#         "results/smedley_et_al/variants.parquet",
-#         "results/hgmd/variants.parquet",
-#         "results/roulette/merged.parquet",
-#     output:
-#         "results/mendelian_traits/all.parquet",
-#     run:
-#         (
-#             pl.concat(
-#                 [
-#                     pl.read_parquet(input[0]).with_columns(source=pl.lit("clinvar")),
-#                     pl.read_parquet(input[1]).with_columns(
-#                         source=pl.lit("smedley_et_al")
-#                     ),
-#                     pl.read_parquet(input[2]).with_columns(source=pl.lit("hgmd")),
-#                     pl.read_parquet(input[3]).with_columns(source=pl.lit("roulette")),
-#                 ],
-#                 how="diagonal_relaxed",
-#             ).write_parquet(output[0])
-#         )
-#
-#
-# rule mendelian_traits_filter_AF:
-#     input:
-#         "results/mendelian_traits/all.annot_AF.parquet",
-#     output:
-#         "results/mendelian_traits/filt_AF.parquet",
-#     run:
-#         (
-#             pl.read_parquet(input[0])
-#             .filter(pl.col("AF") < config["mendelian_traits"]["af_threshold"] / 100)
-#             .write_parquet(output[0])
-#         )
-#
-#
-# rule mendelian_traits_full_consequence_counts:
-#     input:
-#         "results/mendelian_traits/filt_AF.annot.parquet",
-#     output:
-#         "results/mendelian_traits/consequence_counts.parquet",
-#     run:
-#         (
-#             pl.read_parquet(input[0])
-#             .filter(pl.col("source") != "roulette")
-#             .group_by(["source", "consequence"])
-#             .agg(pl.count())
-#             .write_parquet(output[0])
-#         )
-#
-#
-# rule mendelian_traits_filter_consequence:
-#     input:
-#         "results/mendelian_traits/filt_AF.annot.parquet",
-#     output:
-#         "results/mendelian_traits/filt_AF_consequence.parquet",
-#     run:
-#         (
-#             pl.read_parquet(input[0])
-#             .filter(pl.col("consequence").is_in(config["consequences"]))
-#             .write_parquet(output[0])
-#         )
-#
-#
-# rule mendelian_traits_drop_duplicates:
-#     input:
-#         "results/mendelian_traits/filt_AF_consequence.parquet",
-#     output:
-#         "results/mendelian_traits/unique.parquet",
-#     run:
-#         (
-#             pl.read_parquet(input[0])
-#             # reflects the order in which they were concatenated:
-#             # clinvar, smedley et al, hgmd, roulette
-#             .unique(COORDINATES, keep="first", maintain_order=True)
-#             .with_columns(label=pl.col("source") != "roulette")
-#             .sort(COORDINATES)
-#             .write_parquet(output[0])
-#         )
-#
-#
+rule mendelian_traits_full_consequence_counts:
+    input:
+        "results/mendelian_traits/positives.parquet",
+    output:
+        "results/mendelian_traits/full_consequence_counts.parquet",
+    run:
+        (
+            pl.read_parquet(input[0])
+            .group_by(["source", "consequence"])
+            .agg(pl.count())
+            .sort(["source", "count"], descending=True)
+            .write_parquet(output[0])
+        )
+
+
+rule mendelian_traits_dataset_all:
+    input:
+        "results/mendelian_traits/positives.parquet",
+        "results/gnomad/common.parquet",
+        "results/intervals/exon.parquet",
+        "results/intervals/tss.parquet",
+    output:
+        "results/dataset/mendelian_traits_all/test.parquet",
+    run:
+        exon = pl.read_parquet(input[2])
+        tss = pl.read_parquet(input[3])
+        V = (
+            pl.concat(
+                [
+                    pl.read_parquet(input[0]).with_columns(label=pl.lit(True)),
+                    pl.read_parquet(input[1]).with_columns(label=pl.lit(False)),
+                ]
+            )
+            .filter(~pl.col("consequence").is_in(config["exclude_consequences"]))
+            # order is important, tss_proximal overrides exon_proximal
+            .pipe(add_exon, exon, config["exon_proximal_dist"])
+            .pipe(add_tss, tss, config["tss_proximal_dist"])
+        )
+        consequence_final_pos = V.filter("label")["consequence_final"].unique()
+        V = V.filter(pl.col("consequence_final").is_in(consequence_final_pos))
+        V.sort(COORDINATES).write_parquet(output[0])
+
+
 # rule mendelian_traits_add_additional_features:
 #     input:
 #         "results/mendelian_traits/unique.parquet",

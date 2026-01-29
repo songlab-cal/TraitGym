@@ -1,3 +1,5 @@
+annotation_url: "http://ftp.ensembl.org/pub/release-107/gtf/homo_sapiens/Homo_sapiens.GRCh38.107.chr.gtf.gz"
+
 clinvar:
   release: 20251019
   submission_summary_url: https://ftp.ncbi.nlm.nih.gov/pub/clinvar/tab_delimited/archive/submission_summary_2025-10.txt.gz
@@ -8,3 +10,21 @@ gnomad:
 
 mendelian_traits:
   AF_threshold: 0.001  # 0.1%
+
+# these have IMPACT=HIGH according to Ensembl VEP
+# https://useast.ensembl.org/info/genome/variation/prediction/predicted_data.html
+# we are more interested in those with unclear effects
+exclude_consequences:
+  - transcript_ablation
+  - splice_acceptor_variant
+  - splice_donor_variant
+  - stop_gained
+  - frameshift_variant
+  - stop_lost
+  - start_lost
+  - transcript_amplification
+  - feature_elongation
+  - feature_truncation
+
+tss_proximal_dist: 1000
+exon_proximal_dist: 30
