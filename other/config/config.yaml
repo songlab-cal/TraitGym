@@ -5,27 +5,6 @@ tss_proximal_dist: 1000
 exon_proximal_dist: 100
 cre_flank_dist: 500
 
-clinvar:
-  # not sure how exactly to match these two, since one is weekly and the other is monthly
-  release: 20251019
-  submission_summary_url: https://ftp.ncbi.nlm.nih.gov/pub/clinvar/tab_delimited/archive/submission_summary_2025-10.txt.gz
-
-mendelian_traits:
-  af_threshold: 0.1  # 0.1%
-
-consequences:
-  - intergenic_variant
-  - intron_variant
-  - upstream_gene_variant
-  - downstream_gene_variant
-  - 5_prime_UTR_variant
-  - 3_prime_UTR_variant
-  - non_coding_transcript_exon_variant
-  - splice_donor_5th_base_variant
-  - splice_region_variant
-  - splice_donor_region_variant
-  - splice_polypyrimidine_tract_variant
-
 splicing_consequences:
   - splice_donor_5th_base_variant
   - splice_region_variant

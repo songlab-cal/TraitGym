@@ -1,0 +1,11 @@
+configfile: "config/config.yaml"
+
+
+include: "rules/common.smk"
+include: "rules/consequence.smk"
+include: "rules/intervals.smk"
+include: "rules/clinvar.smk"
+include: "rules/gnomad.smk"
+include: "rules/hgmd.smk"
+include: "rules/mendelian_traits.smk"
+include: "rules/smedley_et_al.smk"

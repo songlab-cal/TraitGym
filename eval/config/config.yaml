@@ -1,0 +1,36 @@
+precomputed:
+  CADD:
+    url: "https://krishna.gs.washington.edu/download/CADD/v1.7/GRCh38/whole_genome_SNVs.tsv.gz"
+  GPN-MSA_LLR:
+    url: "https://huggingface.co/datasets/songlab/gpn-msa-hg38-scores/resolve/main/scores.tsv.bgz"
+
+gpn_star:
+  V:
+    repo_id: songlab/gpn-star-hg38-v100-200m
+    msa_path: /scratch/users/czye/GPN/egpn/analysis/human/egpn/workflow/results/msa/hg38/multiz100way/100
+    window_size: 128
+    per_device_batch_size: 64
+  M:
+    repo_id: songlab/gpn-star-hg38-m447-200m
+    msa_path: /scratch/users/czye/GPN/egpn/analysis/human/egpn/workflow/results/msa/hg38/cactus447way/447
+    window_size: 256
+    per_device_batch_size: 32
+  P:
+    repo_id: songlab/gpn-star-hg38-p243-200m
+    msa_path: /scratch/users/czye/GPN/egpn/analysis/human/egpn/workflow/results/msa/hg38/cactus447way/243
+    window_size: 256
+    per_device_batch_size: 64
+
+genome_url: "http://ftp.ensembl.org/pub/release-107/fasta/homo_sapiens/dna/Homo_sapiens.GRCh38.dna_sm.primary_assembly.fa.gz"
+
+datasets:
+  mendelian_traits_matched_9: "../dataset/results/dataset/mendelian_traits_matched_9/test.parquet"
+  # mendelian_traits_all: "../dataset/results/dataset/mendelian_traits_all/test.parquet"
+
+models:
+  - CADD.plus.score
+  - GPN-MSA_LLR.minus.score
+  - GPN-Star-V_LLR.minus.llr_calibrated
+  - GPN-Star-M_LLR.minus.llr_calibrated
+  - GPN-Star-P_LLR.minus.llr_calibrated
+  - AlphaGenome_L2_max.plus.all

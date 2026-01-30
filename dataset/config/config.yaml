@@ -1,0 +1,59 @@
+annotation_url: "http://ftp.ensembl.org/pub/release-107/gtf/homo_sapiens/Homo_sapiens.GRCh38.107.chr.gtf.gz"
+
+clinvar:
+  release: 20251019
+  submission_summary_url: https://ftp.ncbi.nlm.nih.gov/pub/clinvar/tab_delimited/archive/submission_summary_2025-10.txt.gz
+
+gnomad:
+  min_AN: 25000  # minimum number of samples
+  AF_threshold_common: 0.05  # 5%
+
+mendelian_traits:
+  AF_threshold: 0.001  # 0.1%
+
+# these have IMPACT=HIGH according to Ensembl VEP
+# https://useast.ensembl.org/info/genome/variation/prediction/predicted_data.html
+# we are more interested in those with unclear effects
+exclude_consequences:
+  - transcript_ablation
+  - splice_acceptor_variant
+  - splice_donor_variant
+  - stop_gained
+  - frameshift_variant
+  - stop_lost
+  - start_lost
+  - transcript_amplification
+  - feature_elongation
+  - feature_truncation
+
+tss_proximal_dist: 1000
+exon_proximal_dist: 30
+
+consequence_groups:
+  splicing:
+    - splice_donor_5th_base_variant
+    - splice_region_variant
+    - splice_donor_region_variant
+    - splice_polypyrimidine_tract_variant
+    - exon_proximal
+  distal:
+    - intergenic_variant
+    - intron_variant
+    - upstream_gene_variant
+    - downstream_gene_variant
+    - PLS
+    - PLS_flank
+    - pELS
+    - pELS_flank
+    - dELS
+    - dELS_flank
+    - CA-H3K4me3
+    - CA-H3K4me3_flank
+    - CA-CTCF
+    - CA-CTCF_flank
+    - CA-TF
+    - CA-TF_flank
+    - CA
+    - CA_flank
+    - TF
+    - TF_flank

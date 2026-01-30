@@ -33,10 +33,13 @@ rule clinvar_process:
                     int(variant.ID),
                 ]
             )
-        V = pd.DataFrame(rows, columns=COORDINATES + ["clinvar_id"])
-        V = filter_snp(V)
-        V = filter_chroms(V)
-        V.to_parquet(output[0], index=False)
+        (
+            pl.DataFrame(rows, schema=COORDINATES + ["clinvar_id"], orient="row")
+            .pipe(filter_snp)
+            .pipe(filter_chroms)
+            .sort(COORDINATES)
+            .write_parquet(output[0])
+        )
 
 
 rule clinvar_submission_summary_download:
@@ -52,6 +55,7 @@ rule clinvar_submission_summary_process:
     output:
         temp("results/clinvar/submission_summary.parquet"),
     run:
+        # Using pandas due to malformed rows in this file
         pd.read_csv(input[0], sep="\t", skiprows=18).to_parquet(output[0], index=False)
 
 
@@ -92,7 +96,7 @@ rule clinvar_submission_summary_omim:
         ).drop(["ClinicalSignificance", "SubmittedPhenotypeInfo"])
         df = (
             df.group_by("clinvar_id")
-            .agg(pl.col("ReportedPhenotypeInfo").unique())
+            .agg(pl.col("ReportedPhenotypeInfo").unique(maintain_order=True))
             .with_columns(pl.col("ReportedPhenotypeInfo").list.join("|").alias("trait"))
             .drop("ReportedPhenotypeInfo")
         )
@@ -108,5 +112,5 @@ rule clinvar_omim:
     run:
         V = pl.read_parquet(input[0])
         df = pl.read_parquet(input[1])
-        V = V.join(df, on="clinvar_id", how="inner", maintain_order="left")
+        V = V.join(df, on="clinvar_id", how="inner").sort(COORDINATES)
         V.write_parquet(output[0])

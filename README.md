@@ -66,6 +66,12 @@ mkdir -p results/dataset
 uv run huggingface-cli download songlab/TraitGym --repo-type dataset --local-dir results/dataset/
 ```
 
+### Testing
+Run tests with:
+```bash
+uv run pytest
+```
+
 ### Code Formatting
 This project uses pre-commit hooks for automatic code formatting and linting.
 
