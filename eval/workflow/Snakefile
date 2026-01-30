@@ -6,9 +6,6 @@ include: "rules/precomputed.smk"
 include: "rules/model.smk"
 
 
-PRECOMPUTED_MODELS = ["GPN-MSA_LLR"]
-
-
 rule all:
     input:
         expand(
