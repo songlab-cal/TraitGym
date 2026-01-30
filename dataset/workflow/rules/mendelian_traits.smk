@@ -84,6 +84,16 @@ rule mendelian_traits_dataset_all:
         )
         consequence_final_pos = V.filter("label")["consequence_final"].unique()
         V = V.filter(pl.col("consequence_final").is_in(consequence_final_pos))
+        consequence_to_group = {
+            c: group
+            for group, consequences in config["consequence_groups"].items()
+            for c in consequences
+        }
+        V = V.with_columns(
+            pl.col("consequence_final")
+            .replace(consequence_to_group)
+            .alias("consequence_group")
+        )
         V.sort(COORDINATES).write_parquet(output[0])
 
 

@@ -28,3 +28,32 @@ exclude_consequences:
 
 tss_proximal_dist: 1000
 exon_proximal_dist: 30
+
+consequence_groups:
+  splicing:
+    - splice_donor_5th_base_variant
+    - splice_region_variant
+    - splice_donor_region_variant
+    - splice_polypyrimidine_tract_variant
+    - exon_proximal
+  distal:
+    - intergenic_variant
+    - intron_variant
+    - upstream_gene_variant
+    - downstream_gene_variant
+    - PLS
+    - PLS_flank
+    - pELS
+    - pELS_flank
+    - dELS
+    - dELS_flank
+    - CA-H3K4me3
+    - CA-H3K4me3_flank
+    - CA-CTCF
+    - CA-CTCF_flank
+    - CA-TF
+    - CA-TF_flank
+    - CA
+    - CA_flank
+    - TF
+    - TF_flank
