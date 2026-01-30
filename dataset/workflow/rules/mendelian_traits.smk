@@ -87,42 +87,64 @@ rule mendelian_traits_dataset_all:
         V.sort(COORDINATES).write_parquet(output[0])
 
 
-# rule mendelian_traits_add_additional_features:
-#     input:
-#         "results/mendelian_traits/unique.parquet",
-#         "results/intervals/cre.parquet",
-#         "results/intervals/exon.parquet",
-#         "results/intervals/tss.parquet",
-#     output:
-#         "results/mendelian_traits/unique_additional_features.parquet",
-#     run:
-#         V = pl.read_parquet(input[0])
-#         V = V.with_columns(original_consequence=pl.col("consequence"))
-#         cre = pl.read_parquet(input[1])
-#         exon = pl.read_parquet(input[2])
-#         tss = pl.read_parquet(input[3])
-#         V = add_cre(V, cre)
-#         V = add_exon(V, exon)
-#         V = add_tss(V, tss)
-#         V.write_parquet(output[0])
-#
-#
-# rule mendelian_traits_dataset:
-#     input:
-#         "results/mendelian_traits/unique_additional_features.parquet",
-#     output:
-#         "results/dataset/mendelian_traits_matched_{k,\d+}/test.parquet",
-#     run:
-#         V = pl.read_parquet(input[0])
-#         V = match_features(
-#             V.filter(pl.col("label")),
-#             V.filter(~pl.col("label")),
-#             ["AF", "tss_dist", "exon_dist"],
-#             ["chrom", "consequence"],
-#             int(wildcards.k),
-#         )
-#         V.sort(COORDINATES).write_parquet(output[0])
-#
+rule mendelian_traits_dataset_matched:
+    input:
+        "results/dataset/mendelian_traits_all/test.parquet",
+    output:
+        "results/dataset/mendelian_traits_matched_{k}/test.parquet",
+    run:
+        V = pl.read_parquet(input[0])
+        (
+            match_features(
+                V.filter(pl.col("label")),
+                V.filter(~pl.col("label")),
+                ["tss_dist", "exon_dist"],
+                ["chrom", "consequence_final"],
+                int(wildcards.k),
+            ).write_parquet(output[0])
+        )
+
+
+rule mendelian_traits_matched_feature_performance:
+    input:
+        "results/dataset/mendelian_traits_matched_{k}/test.parquet",
+    output:
+        "results/feature_performance/mendelian_traits_matched_{k}.parquet",
+    run:
+        V = pl.read_parquet(input[0])
+        features = ["tss_dist", "exon_dist"]
+        rows = []
+
+        for feature in features:
+            # Global AUPRC (negative distance: closer = higher score)
+            auprc = average_precision_score(V["label"], -V[feature])
+            rows.append(
+                {
+                    "feature": feature,
+                    "consequence_final": "all",
+                    "auprc": auprc,
+                    "n_pos": V["label"].sum(),
+                    "n_neg": (~V["label"]).sum(),
+                }
+            )
+
+            # Per consequence_final
+            for consequence in V["consequence_final"].unique().sort():
+                subset = V.filter(pl.col("consequence_final") == consequence)
+                auprc = average_precision_score(subset["label"], -subset[feature])
+                rows.append(
+                    {
+                        "feature": feature,
+                        "consequence_final": consequence,
+                        "auprc": auprc,
+                        "n_pos": subset["label"].sum(),
+                        "n_neg": (~subset["label"]).sum(),
+                    }
+                )
+
+        pl.DataFrame(rows).write_parquet(output[0])
+
+
 #
 # rule mendelian_traits_dataset_match_gene:
 #     input:
@@ -140,65 +162,4 @@ rule mendelian_traits_dataset_all:
 #         )
 #         V.sort(COORDINATES).write_parquet(output[0])
 #
-#
-# rule mendelian_traits_all_dataset:
-#     input:
-#         "results/mendelian_traits/unique_additional_features.parquet",
-#     output:
-#         "results/dataset/mendelian_traits_all/test.parquet",
-#     run:
-#         V = pl.read_parquet(input[0])
-#         V.sort(COORDINATES).write_parquet(output[0])
-#
-#
-# rule mendelian_traits_legacy_dataset:
-#     output:
-#         "results/dataset/mendelian_traits_legacy/test.parquet",
-#     shell:
-#         "wget -O {output} https://huggingface.co/datasets/songlab/TraitGym/resolve/main/mendelian_traits_matched_9/test.parquet"
-#
-#
-# rule mendelian_traits_alt_add_features:
-#     input:
-#         "results/mendelian_traits/unique.parquet",
-#         "results/intervals/cre.parquet",
-#         "results/intervals/exon.parquet",
-#         "results/intervals/tss.parquet",
-#         "results/gnomad/common.annot.parquet",
-#     output:
-#         "results/mendelian_traits/alt.parquet",
-#     run:
-#         V = pl.read_parquet(input[0]).filter(pl.col("source") != "roulette")
-#         gnomad = (
-#             pl.read_parquet(input[4])
-#             .filter(pl.col("consequence").is_in(config["consequences"]))
-#             .with_columns(source=pl.lit("gnomad"))
-#         )
-#         V = pl.concat([V, gnomad], how="diagonal_relaxed").sort(COORDINATES)
-#
-#         V = V.with_columns(original_consequence=pl.col("consequence"))
-#         cre = pl.read_parquet(input[1])
-#         exon = pl.read_parquet(input[2])
-#         tss = pl.read_parquet(input[3])
-#         V = add_cre(V, cre)
-#         V = add_exon(V, exon)
-#         V = add_tss(V, tss)
-#         V.write_parquet(output[0])
-#
-#
-# rule mendelian_traits_alt_dataset:
-#     input:
-#         "results/mendelian_traits/alt.parquet",
-#     output:
-#         "results/dataset/mendelian_traits_alt_matched_{k,\d+}/test.parquet",
-#     run:
-#         V = pl.read_parquet(input[0])
-#         V = match_features(
-#             V.filter(pl.col("label")),
-#             V.filter(~pl.col("label")),
-#             ["tss_dist", "exon_dist"],
-#             ["chrom", "consequence"],
-#             int(wildcards.k),
-#         )
-#         V.sort(COORDINATES).write_parquet(output[0])
 #
