@@ -33,3 +33,4 @@ models:
   - GPN-Star-V_LLR.minus.llr_calibrated
   - GPN-Star-M_LLR.minus.llr_calibrated
   - GPN-Star-P_LLR.minus.llr_calibrated
+  - AlphaGenome_L2_max.plus.all
