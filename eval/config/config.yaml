@@ -1,0 +1,13 @@
+precomputed:
+  # CADD: missing X and Y chromosomes, will recompute later
+  # CADD:
+  #   url: "https://krishna.gs.washington.edu/download/CADD/v1.7/GRCh38/whole_genome_SNVs.tsv.gz"
+  GPN-MSA_LLR:
+    url: "https://huggingface.co/datasets/songlab/gpn-msa-hg38-scores/resolve/main/scores.tsv.bgz"
+
+datasets:
+  mendelian_traits_matched_9: "../dataset/results/dataset/mendelian_traits_matched_9/test.parquet"
+
+models:
+  # - CADD.plus.score
+  - GPN-MSA_LLR.minus.score
