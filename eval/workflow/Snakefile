@@ -4,17 +4,12 @@ configfile: "config/config.yaml"
 include: "rules/common.smk"
 include: "rules/precomputed.smk"
 include: "rules/model.smk"
+include: "rules/plot.smk"
 
 
 rule all:
     input:
         expand(
-            "results/metrics/{dataset}/{model}.parquet",
+            "results/plots/{dataset}/model_comparison.svg",
             dataset=config["datasets"].keys(),
-            model=config["models"],
         ),
-        # expand(
-        #     "results/features/{dataset}/{model}.parquet",
-        #     dataset=config["datasets"].keys(),
-        #     model=PRECOMPUTED_MODELS,
-        # )

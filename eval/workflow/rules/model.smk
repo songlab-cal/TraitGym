@@ -26,23 +26,34 @@ rule compute_metrics:
     run:
         V = pl.read_parquet(input.dataset, columns=["label", "consequence_group"])
         score = pl.read_parquet(input.preds)["score"]
+        # Patch: fill NaN with mean for GPN-MSA on mendelian_traits_all if <0.01% NaN
+        if wildcards.dataset == "mendelian_traits_all" and wildcards.model.startswith(
+            "GPN-MSA"
+        ):
+            nan_pct = score.null_count() / len(score) * 100
+            if nan_pct > 0 and nan_pct < 0.01:
+                score = score.fill_null(score.mean())
         rows = []
+        labels = V["label"]
         rows.append(
             {
                 "subset": "global",
                 "metric": "AUPRC",
-                "score": average_precision_score(V["label"], score),
+                "score": average_precision_score(labels, score),
+                "n_pos": labels.sum(),
+                "n_neg": len(labels) - labels.sum(),
             }
         )
         for group in V["consequence_group"].unique().sort():
             mask = V["consequence_group"] == group
+            labels_subset = V.filter(mask)["label"]
             rows.append(
                 {
                     "subset": group,
                     "metric": "AUPRC",
-                    "score": average_precision_score(
-                        V.filter(mask)["label"], score.filter(mask)
-                    ),
+                    "score": average_precision_score(labels_subset, score.filter(mask)),
+                    "n_pos": labels_subset.sum(),
+                    "n_neg": len(labels_subset) - labels_subset.sum(),
                 }
             )
         pl.DataFrame(rows).write_parquet(output[0])

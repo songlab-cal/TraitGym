@@ -6,6 +6,7 @@ precomputed:
 
 datasets:
   mendelian_traits_matched_9: "../dataset/results/dataset/mendelian_traits_matched_9/test.parquet"
+  mendelian_traits_all: "../dataset/results/dataset/mendelian_traits_all/test.parquet"
 
 models:
   - CADD.plus.score
