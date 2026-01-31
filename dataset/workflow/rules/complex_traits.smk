@@ -23,8 +23,6 @@ rule complex_traits_download_finemapping:
                     "allele2",
                     "rsid",
                     "pip",
-                    "beta_posterior",
-                    "sd_posterior",
                 ],
             )
             .rename(
@@ -36,7 +34,6 @@ rule complex_traits_download_finemapping:
                 }
             )
             .pipe(filter_snp)
-            .drop_nulls("pip")
             .write_parquet(output[0])
         )
 
@@ -48,27 +45,30 @@ rule complex_traits_combine_methods:
     output:
         "results/complex_traits/finemapping/{trait}/combined.parquet",
     run:
+        pip_defined_in_both_methods = (
+            pl.col("pip_susie").is_not_null() & pl.col("pip_finemap").is_not_null()
+        )
         (
             pl.read_parquet(input.susie)
             .join(
                 pl.read_parquet(input.finemap),
                 on=COORDINATES,
-                how="inner",
+                how="full",
                 suffix="_finemap",
             )
-            .rename(
-                {
-                    "pip": "pip_susie",
-                    "beta_posterior": "beta_posterior_susie",
-                    "sd_posterior": "sd_posterior_susie",
-                }
-            )
+            .rename({"pip": "pip_susie", "rsid": "rsid_susie"})
             .with_columns(
-                pl.when((pl.col("pip_susie") - pl.col("pip_finemap")).abs() <= 0.05)
-                .then((pl.col("pip_susie") + pl.col("pip_finemap")) / 2)
-                .otherwise(pl.lit(None))
+                *(pl.coalesce(col, f"{col}_finemap").alias(col) for col in COORDINATES),
+                pl.coalesce("rsid_susie", "rsid_finemap").alias("rsid"),
+                pl.when(pip_defined_in_both_methods)
+                .then(
+                    pl.when((pl.col("pip_susie") - pl.col("pip_finemap")).abs() <= 0.05)
+                    .then((pl.col("pip_susie") + pl.col("pip_finemap")) / 2)
+                    .otherwise(pl.lit(None))
+                )
+                .otherwise(pl.coalesce("pip_susie", "pip_finemap"))
                 .alias("pip"),
             )
-            .drop("rsid_finemap")
+            .select([*COORDINATES, "rsid", "pip"])
             .write_parquet(output[0])
         )
