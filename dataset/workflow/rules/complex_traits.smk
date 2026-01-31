@@ -133,3 +133,73 @@ rule complex_traits_aggregate_traits:
             .sort(COORDINATES)
             .write_parquet(output[0])
         )
+
+
+# Liftover from hg19 to hg38 drops one positive: chr10:17891705 (rs1556465893, AST/Alb/TP).
+# This region doesn't exist in hg38 (dbSNP has no GRCh38 mapping for this variant).
+rule complex_traits_annotate:
+    input:
+        "results/complex_traits/finemapping/aggregated.parquet",
+        "results/ldscore/UKBB.EUR.ldscore.parquet",
+        genome="results/genome.fa.gz",
+        consequences=expand("results/consequences/{chrom}.parquet", chrom=CHROMS),
+    output:
+        "results/complex_traits/annotated.parquet",
+    run:
+        ldscore = pl.read_parquet(input[1], columns=COORDINATES + ["MAF", "ld_score"])
+        genome = Genome(input.genome)
+        V = (
+            pl.read_parquet(input[0])
+            .join(ldscore, on=COORDINATES, how="left")
+            .pipe(lift_hg19_to_hg38)
+            .filter(pl.col("pos") != -1)
+            .pipe(filter_chroms)
+            .pipe(check_ref_alt, genome)
+            .sort(COORDINATES)
+        )
+        results = []
+        for path, chrom in zip(input.consequences, CHROMS):
+            chrom_variants = V.filter(pl.col("chrom") == chrom).lazy()
+            consequences_lf = pl.scan_parquet(path)
+            joined = chrom_variants.join(
+                consequences_lf,
+                on=COORDINATES,
+                how="left",
+                maintain_order="left",
+            ).collect(engine="streaming")
+            results.append(joined)
+        pl.concat(results).write_parquet(output[0])
+
+
+rule complex_traits_full_consequence_counts:
+    input:
+        "results/complex_traits/annotated.parquet",
+    output:
+        "results/complex_traits/full_consequence_counts.parquet",
+    run:
+        (
+            pl.read_parquet(input[0])
+            .group_by("consequence")
+            .agg(pl.count())
+            .sort("count", descending=True)
+            .write_parquet(output[0])
+        )
+
+
+rule complex_traits_dataset_all:
+    input:
+        "results/complex_traits/annotated.parquet",
+        "results/intervals/exon.parquet",
+        "results/intervals/tss.parquet",
+    output:
+        "results/dataset/complex_traits_all/test.parquet",
+    run:
+        build_dataset(
+            pl.read_parquet(input[0]),
+            pl.read_parquet(input[1]),
+            pl.read_parquet(input[2]),
+            config["exclude_consequences"],
+            config["exon_proximal_dist"],
+            config["tss_proximal_dist"],
+            config["consequence_groups"],
+        ).write_parquet(output[0])

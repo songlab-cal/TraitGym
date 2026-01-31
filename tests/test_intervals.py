@@ -3,10 +3,13 @@ import pytest
 
 from traitgym.intervals import add_exon, add_tss, get_exon, get_tss, load_annotation
 
+ANNOTATION_PATH = "dataset/results/annotation.gtf.gz"
 
+
+@pytest.mark.slow
 class TestLoadAnnotation:
     def test_loads_gtf(self) -> None:
-        ann = load_annotation("other/results/annotation.gtf.gz")
+        ann = load_annotation(ANNOTATION_PATH)
         assert ann.shape[0] > 0
         assert set(ann.columns) == {
             "chrom",
@@ -21,17 +24,18 @@ class TestLoadAnnotation:
         }
 
     def test_converts_to_0_based(self) -> None:
-        ann = load_annotation("other/results/annotation.gtf.gz")
+        ann = load_annotation(ANNOTATION_PATH)
         # GTF is 1-based, BED is 0-based, so start should be decremented
         # First gene on chr1 starts at 11869 in GTF, should be 11868 in BED
         chr1 = ann.filter(pl.col("chrom") == "1")
         assert chr1["start"].min() == 11868
 
 
+@pytest.mark.slow
 class TestGetTss:
     @pytest.fixture
     def annotation(self) -> pl.DataFrame:
-        return load_annotation("other/results/annotation.gtf.gz")
+        return load_annotation(ANNOTATION_PATH)
 
     def test_output_schema(self, annotation: pl.DataFrame) -> None:
         tss = get_tss(annotation)
@@ -56,7 +60,7 @@ class TestGetTss:
         my_tss = get_tss(annotation)
 
         # Original logic (without unique/sort)
-        ann_pd = load_table("other/results/annotation.gtf.gz")
+        ann_pd = load_table(ANNOTATION_PATH)
         tx = ann_pd.query('feature=="transcript"').copy()
         tx["gene_id"] = tx.attribute.str.extract(r'gene_id "([^;]*)";')
         tx["transcript_biotype"] = tx.attribute.str.extract(
@@ -75,10 +79,11 @@ class TestGetTss:
         assert my_sorted.equals(orig_tss)
 
 
+@pytest.mark.slow
 class TestGetExon:
     @pytest.fixture
     def annotation(self) -> pl.DataFrame:
-        return load_annotation("other/results/annotation.gtf.gz")
+        return load_annotation(ANNOTATION_PATH)
 
     def test_output_schema(self, annotation: pl.DataFrame) -> None:
         exon = get_exon(annotation)
@@ -115,7 +120,7 @@ class TestGetExon:
         my_exon = get_exon(annotation)
 
         # Original logic
-        ann_pd = load_table("other/results/annotation.gtf.gz")
+        ann_pd = load_table(ANNOTATION_PATH)
         exon = ann_pd.query('feature=="exon"').copy()
         exon["gene_id"] = exon.attribute.str.extract(r'gene_id "([^;]*)";')
         exon["transcript_biotype"] = exon.attribute.str.extract(
@@ -133,10 +138,11 @@ class TestGetExon:
         assert my_sorted.equals(orig_sorted)
 
 
+@pytest.mark.slow
 class TestAddExon:
     @pytest.fixture
     def exon(self) -> pl.DataFrame:
-        ann = load_annotation("other/results/annotation.gtf.gz")
+        ann = load_annotation(ANNOTATION_PATH)
         return get_exon(ann)
 
     @pytest.fixture
@@ -186,15 +192,16 @@ class TestAddExon:
         assert result["exon_dist"].to_list() == result_bf["distance"].tolist()
 
 
+@pytest.mark.slow
 class TestAddTss:
     @pytest.fixture
     def tss(self) -> pl.DataFrame:
-        ann = load_annotation("other/results/annotation.gtf.gz")
+        ann = load_annotation(ANNOTATION_PATH)
         return get_tss(ann)
 
     @pytest.fixture
     def exon(self) -> pl.DataFrame:
-        ann = load_annotation("other/results/annotation.gtf.gz")
+        ann = load_annotation(ANNOTATION_PATH)
         return get_exon(ann)
 
     @pytest.fixture

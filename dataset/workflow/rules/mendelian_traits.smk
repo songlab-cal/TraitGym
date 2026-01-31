@@ -67,34 +67,22 @@ rule mendelian_traits_dataset_all:
     output:
         "results/dataset/mendelian_traits_all/test.parquet",
     run:
-        exon = pl.read_parquet(input[2])
-        tss = pl.read_parquet(input[3])
-        V = (
-            pl.concat(
-                [
-                    pl.read_parquet(input[0]).with_columns(label=pl.lit(True)),
-                    pl.read_parquet(input[1]).with_columns(label=pl.lit(False)),
-                ],
-                how="diagonal_relaxed",
-            )
-            .filter(~pl.col("consequence").is_in(config["exclude_consequences"]))
-            # order is important, tss_proximal overrides exon_proximal
-            .pipe(add_exon, exon, config["exon_proximal_dist"])
-            .pipe(add_tss, tss, config["tss_proximal_dist"])
+        V = pl.concat(
+            [
+                pl.read_parquet(input[0]).with_columns(label=pl.lit(True)),
+                pl.read_parquet(input[1]).with_columns(label=pl.lit(False)),
+            ],
+            how="diagonal_relaxed",
         )
-        consequence_final_pos = V.filter("label")["consequence_final"].unique()
-        V = V.filter(pl.col("consequence_final").is_in(consequence_final_pos))
-        consequence_to_group = {
-            c: group
-            for group, consequences in config["consequence_groups"].items()
-            for c in consequences
-        }
-        V = V.with_columns(
-            pl.col("consequence_final")
-            .replace(consequence_to_group)
-            .alias("consequence_group")
-        )
-        V.sort(COORDINATES).write_parquet(output[0])
+        build_dataset(
+            V,
+            pl.read_parquet(input[2]),
+            pl.read_parquet(input[3]),
+            config["exclude_consequences"],
+            config["exon_proximal_dist"],
+            config["tss_proximal_dist"],
+            config["consequence_groups"],
+        ).write_parquet(output[0])
 
 
 rule mendelian_traits_dataset_matched:

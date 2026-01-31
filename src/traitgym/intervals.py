@@ -1,7 +1,7 @@
 import polars as pl
 import polars_bio as pb
 
-from traitgym.variants import CHROMS, NON_EXONIC
+from traitgym.variants import CHROMS, COORDINATES, NON_EXONIC
 
 
 GTF_COLUMNS = [
@@ -200,3 +200,42 @@ def add_tss(
         .otherwise(pl.col("consequence_final"))
         .alias("consequence_final"),
     )
+
+
+def build_dataset(
+    V: pl.DataFrame,
+    exon: pl.DataFrame,
+    tss: pl.DataFrame,
+    exclude_consequences: list[str],
+    exon_proximal_dist: int,
+    tss_proximal_dist: int,
+    consequence_groups: dict[str, list[str]],
+) -> pl.DataFrame:
+    """Build a dataset with final consequence annotations and groups.
+
+    Args:
+        V: Variant DataFrame with columns including 'label' and 'consequence'.
+        exon: Exon intervals from get_exon().
+        tss: TSS intervals from get_tss().
+        exclude_consequences: List of consequences to filter out.
+        exon_proximal_dist: Distance threshold for exon_proximal consequence.
+        tss_proximal_dist: Distance threshold for tss_proximal consequence.
+        consequence_groups: Mapping from group name to list of consequences.
+
+    Returns:
+        Processed DataFrame with consequence_final, consequence_group columns,
+        filtered and sorted by COORDINATES.
+    """
+    V = (
+        V.filter(~pl.col("consequence").is_in(exclude_consequences))
+        .pipe(add_exon, exon, exon_proximal_dist)
+        .pipe(add_tss, tss, tss_proximal_dist)
+    )
+    consequence_final_pos = V.filter("label")["consequence_final"].unique()
+    V = V.filter(pl.col("consequence_final").is_in(consequence_final_pos))
+    consequence_to_group = {
+        c: group for group, consequences in consequence_groups.items() for c in consequences
+    }
+    return V.with_columns(
+        pl.col("consequence_final").replace(consequence_to_group).alias("consequence_group")
+    ).sort(COORDINATES)

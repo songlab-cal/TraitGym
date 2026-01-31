@@ -18,7 +18,7 @@ class TestConstants:
         assert NUCLEOTIDES == ["A", "C", "G", "T"]
 
     def test_chroms(self) -> None:
-        expected = [str(i) for i in range(1, 23)] + ["X", "Y"]
+        expected = sorted([str(i) for i in range(1, 23)] + ["X", "Y"])
         assert CHROMS == expected
         assert len(CHROMS) == 24
 

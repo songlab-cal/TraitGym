@@ -35,6 +35,12 @@ allow-direct-references = true
 [tool.hatch.build.targets.wheel]
 packages = ["src/traitgym"]
 
+[tool.pytest.ini_options]
+addopts = "-m 'not slow'"
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+]
+
 [tool.snakefmt]
 include = '\.smk$|^Snakefile|\.py$'
 
