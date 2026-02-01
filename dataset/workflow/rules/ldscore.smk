@@ -16,7 +16,7 @@ rule ldscore_convert:
         "python3 workflow/scripts/ht2tsv.py {input} {output}"
 
 
-# (base) shelob:~/projects/functionality-prediction$ zcat results/ldscore/UKBB.EUR.ldscore.tsv.bgz | head
+# $ zcat results/ldscore/UKBB.EUR.ldscore.tsv.bgz | head
 # locus   alleles rsid    AF      ld_score
 # 1:11063 ["T","G"]       rs561109771     4.7982e-05      5.7386e+00
 # 1:13259 ["G","A"]       rs562993331     2.7798e-04      5.0488e+00
@@ -32,11 +32,10 @@ rule ldscore_convert:
 rule ldscore_process:
     input:
         "results/ldscore/UKBB.EUR.ldscore.tsv.bgz",
-        "results/genome.fa.gz",
     output:
         "results/ldscore/UKBB.EUR.ldscore.parquet",
     run:
-        V = (
+        (
             pl.read_csv(
                 input[0],
                 separator="\t",
@@ -55,7 +54,7 @@ rule ldscore_process:
                 pl.when(pl.col("AF") < 0.5)
                 .then(pl.col("AF"))
                 .otherwise(1 - pl.col("AF"))
-                .alias("maf"),
+                .alias("MAF"),
             )
             .with_columns(
                 pl.col("locus").struct.field("chrom"),
@@ -64,34 +63,8 @@ rule ldscore_process:
                 pl.col("alleles").struct.field("alt"),
             )
             .drop(["locus", "alleles"])
-            .select(COORDINATES + ["maf", "ld_score"])
-            .to_pandas()
+            .pipe(filter_snp)
+            .select(COORDINATES + ["MAF", "ld_score"])
+            .sort(COORDINATES)
+            .write_parquet(output[0])
         )
-        print(V)
-        V = filter_snp(V)
-        print(V.shape)
-        V = lift_hg19_to_hg38(V)
-        V = V[V.pos != -1]
-        print(V.shape)
-        genome = Genome(input[1])
-        V = check_ref_alt(V, genome)
-        print(V.shape)
-        V = sort_variants(V)
-        V.to_parquet(output[0], index=False)
-
-
-rule ldscore_feature:
-    input:
-        "results/dataset/{dataset}/test.parquet",
-        "results/ldscore/UKBB.EUR.ldscore.parquet",
-    output:
-        "results/dataset/{dataset}/features/LDScore.parquet",
-    run:
-        V = pd.read_parquet(input[0])
-        ldscore = pd.read_parquet(input[1], columns=COORDINATES + ["ld_score"]).rename(
-            columns={"ld_score": "score"}
-        )
-        V = V.merge(ldscore, on=COORDINATES, how="left")
-        print(f"{V.score.isna().sum()=}")
-        print(V.groupby("label").score.mean())
-        V[["score"]].to_parquet(output[0], index=False)

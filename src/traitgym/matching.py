@@ -45,6 +45,9 @@ def match_features(
     required_cols = COORDINATES + continuous_features + categorical_features
     _validate_columns(pos, required_cols, "pos")
     _validate_columns(neg, required_cols, "neg")
+    all_features = continuous_features + categorical_features
+    _validate_no_nulls(pos, all_features, "pos")
+    _validate_no_nulls(neg, all_features, "neg")
 
     pos_pd = pos.to_pandas()
     neg_pd = neg.to_pandas()
@@ -96,6 +99,27 @@ def _validate_columns(
     missing = set(required) - set(df.columns)
     if missing:
         raise ValueError(f"{name} is missing columns: {sorted(missing)}")
+
+
+def _validate_no_nulls(
+    df: pl.DataFrame,
+    columns: list[str],
+    name: str,
+) -> None:
+    """Validate DataFrame has no null values in specified columns.
+
+    Args:
+        df: DataFrame to validate.
+        columns: List of column names to check.
+        name: Name of DataFrame for error messages.
+
+    Raises:
+        ValueError: If any columns contain null values.
+    """
+    for col in columns:
+        null_count = df[col].null_count()
+        if null_count > 0:
+            raise ValueError(f"{name} has {null_count} null values in column '{col}'")
 
 
 def _scale_features(

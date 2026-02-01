@@ -28,7 +28,7 @@ datasets:
   # mendelian_traits_all: "../dataset/results/dataset/mendelian_traits_all/test.parquet"
 
 models:
-  - CADD.plus.score
+  # - CADD.plus.score  # let's only do it for complex traits, for now
   - GPN-MSA_LLR.minus.score
   - GPN-Star-V_LLR.minus.llr_calibrated
   - GPN-Star-M_LLR.minus.llr_calibrated
