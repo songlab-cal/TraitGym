@@ -13,7 +13,7 @@ rule all:
     input:
         expand(
             "results/plots/model_comparison/{dataset}.svg",
-            dataset=config["evaluate_models"].keys(),
+            dataset=list(config["evaluate_models"].keys()) + ["combined"],
         ),
 
 

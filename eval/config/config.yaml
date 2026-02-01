@@ -35,7 +35,7 @@ evaluate_models:
     - GPN-Star-M_cLLR.minus.llr_calibrated
     - GPN-Star-P_cLLR.minus.llr_calibrated
     - AlphaGenome_L2_max.plus.all
-    - GPN-Star_AlphaGenome
+    # - GPN-Star_AlphaGenome
   complex_traits_matched_9:
     - CADD.plus.score
     - GPN-MSA_absLLR.plus.score
@@ -43,7 +43,7 @@ evaluate_models:
     - GPN-Star-M_cLLR.plus.abs_llr_calibrated
     - GPN-Star-P_cLLR.plus.abs_llr_calibrated
     - AlphaGenome_L2_max.plus.all
-    - GPN-Star_abs_AlphaGenome
+    # - GPN-Star_abs_AlphaGenome
 
 ensembles:
   GPN-Star_AlphaGenome:
@@ -55,6 +55,12 @@ ensembles:
     - AlphaGenome_L2_max.plus.all
 
 plots:
+  datasets:
+    mendelian_traits_matched_9:
+      alias: "Mendelian"
+    complex_traits_matched_9:
+      alias: "Complex"
+
   models:
     GPN-MSA_LLR.minus.score:
       alias: "GPN-MSA"
