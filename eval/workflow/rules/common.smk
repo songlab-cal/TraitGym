@@ -18,3 +18,16 @@ rule download_genome:
         "results/genome.fa.gz",
     shell:
         "wget {config[genome_url]} -O {output}"
+
+
+rule abs_llr:
+    input:
+        "results/features/{dataset}/{model}_LLR.parquet",
+    output:
+        "results/features/{dataset}/{model}_absLLR.parquet",
+    run:
+        (
+            pl.read_parquet(input[0])
+            .with_columns(pl.col("score").abs())
+            .write_parquet(output[0])
+        )

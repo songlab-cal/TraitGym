@@ -17,6 +17,26 @@ rule unsupervised_pred:
         score.rename("score").to_frame().write_parquet(output[0])
 
 
+rule ensemble_ranks:
+    input:
+        lambda wildcards: expand(
+            "results/preds/{{dataset}}/{model}.parquet",
+            model=config["ensembles"][wildcards.ensemble],
+        ),
+    output:
+        "results/preds/{dataset}/{ensemble}.parquet",
+    wildcard_constraints:
+        ensemble="|".join(list(config["ensembles"].keys())),
+    run:
+        def load_score(path: str) -> pl.Series:
+            return -pl.read_parquet(path)["score"].rank(descending=True)
+
+
+        data = {f"score_{i}": load_score(path) for i, path in enumerate(input)}
+        df = pl.DataFrame(data)
+        df.sum_horizontal().rename("score").to_frame().write_parquet(output[0])
+
+
 rule compute_metrics:
     input:
         dataset=lambda wc: config["datasets"][wc.dataset],

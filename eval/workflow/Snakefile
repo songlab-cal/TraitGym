@@ -13,5 +13,5 @@ rule all:
     input:
         expand(
             "results/plots/{dataset}/model_comparison.svg",
-            dataset=config["datasets"].keys(),
+            dataset=config["evaluate_models"].keys(),
         ),

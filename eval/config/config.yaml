@@ -25,12 +25,31 @@ genome_url: "http://ftp.ensembl.org/pub/release-107/fasta/homo_sapiens/dna/Homo_
 
 datasets:
   mendelian_traits_matched_9: "../dataset/results/dataset/mendelian_traits_matched_9/test.parquet"
+  complex_traits_matched_9: "../dataset/results/dataset/complex_traits_matched_9/test.parquet"
   # mendelian_traits_all: "../dataset/results/dataset/mendelian_traits_all/test.parquet"
 
-models:
-  # - CADD.plus.score  # let's only do it for complex traits, for now
-  - GPN-MSA_LLR.minus.score
-  - GPN-Star-V_LLR.minus.llr_calibrated
-  - GPN-Star-M_LLR.minus.llr_calibrated
-  - GPN-Star-P_LLR.minus.llr_calibrated
-  - AlphaGenome_L2_max.plus.all
+evaluate_models:
+  mendelian_traits_matched_9:
+    - GPN-MSA_LLR.minus.score
+    - GPN-Star-V_cLLR.minus.llr_calibrated
+    - GPN-Star-M_cLLR.minus.llr_calibrated
+    - GPN-Star-P_cLLR.minus.llr_calibrated
+    - AlphaGenome_L2_max.plus.all
+    - GPN-Star_AlphaGenome
+  complex_traits_matched_9:
+    - CADD.plus.score
+    - GPN-MSA_absLLR.plus.score
+    - GPN-Star-V_cLLR.plus.abs_llr_calibrated
+    - GPN-Star-M_cLLR.plus.abs_llr_calibrated
+    - GPN-Star-P_cLLR.plus.abs_llr_calibrated
+    - AlphaGenome_L2_max.plus.all
+    - GPN-Star_abs_AlphaGenome
+
+ensembles:
+  GPN-Star_AlphaGenome:
+    - GPN-Star-M_cLLR.minus.llr_calibrated
+    - AlphaGenome_L2_max.plus.all
+
+  GPN-Star_abs_AlphaGenome:
+    - GPN-Star-M_cLLR.plus.abs_llr_calibrated
+    - AlphaGenome_L2_max.plus.all

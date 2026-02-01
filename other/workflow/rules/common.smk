@@ -81,22 +81,6 @@ tissues = pd.read_csv("config/gtex_tissues.txt", header=None).values.ravel()
 subsets = ["all"] + config["consequence_subsets"]
 
 
-def check_ref(V, genome):
-    V = V[V.apply(lambda v: v.ref == genome.get_nuc(v.chrom, v.pos).upper(), axis=1)]
-    return V
-
-
-def check_ref_alt(V: pd.DataFrame, genome: Genome) -> pd.DataFrame:
-    V["ref_nuc"] = V.progress_apply(
-        lambda v: genome.get_nuc(v.chrom, v.pos).upper(), axis=1
-    )
-    mask = V["ref"] != V["ref_nuc"]
-    V.loc[mask, ["ref", "alt"]] = V.loc[mask, ["alt", "ref"]].values
-    V = V[V["ref"] == V["ref_nuc"]]
-    V.drop(columns=["ref_nuc"], inplace=True)
-    return V
-
-
 rule upload_features_to_hf:
     input:
         "results/features/{dataset}/{features}.parquet",
@@ -132,17 +116,6 @@ def format_number(num):
         return f"{num/1e3:.1f}K"
     else:
         return str(num)
-
-
-rule abs_llr:
-    input:
-        "results/dataset/{dataset}/features/{model}_LLR.parquet",
-    output:
-        "results/dataset/{dataset}/features/{model}_absLLR.parquet",
-    run:
-        df = pd.read_parquet(input[0])
-        df = df.abs()
-        df.to_parquet(output[0], index=False)
 
 
 rule inner_product:
@@ -205,58 +178,6 @@ def block_bootstrap_se(
         bootstraps.append(metric(df_boot[y_true_col], df_boot[y_pred_col]))
     bootstraps = pl.Series(bootstraps)
     return bootstraps.std()
-
-
-rule dataset_subset_all:
-    input:
-        "results/dataset/{dataset}/test.parquet",
-    output:
-        "results/dataset/{dataset}/subset/all.parquet",
-    run:
-        V = pd.read_parquet(input[0])
-        V[COORDINATES].to_parquet(output[0], index=False)
-
-
-rule dataset_subset_consequence:
-    input:
-        "results/dataset/{dataset}/test.parquet",
-    output:
-        "results/dataset/{dataset}/subset/{c}.parquet",
-    wildcard_constraints:
-        c="|".join(
-            [
-                "non_coding_transcript_exon_variant",
-                "3_prime_UTR_variant",
-                "5_prime_UTR_variant",
-                "tss_proximal",
-            ]
-        ),
-    run:
-        V = pd.read_parquet(input[0])
-        V = V[V.consequence == wildcards.c]
-        V[COORDINATES].to_parquet(output[0], index=False)
-
-
-rule dataset_subset_splicing:
-    input:
-        "results/dataset/{dataset}/test.parquet",
-    output:
-        "results/dataset/{dataset}/subset/splicing.parquet",
-    run:
-        V = pd.read_parquet(input[0])
-        V = V[V.consequence.isin(config["splicing_consequences"])]
-        V[COORDINATES].to_parquet(output[0], index=False)
-
-
-rule dataset_subset_nonexonic_distal:
-    input:
-        "results/dataset/{dataset}/test.parquet",
-    output:
-        "results/dataset/{dataset}/subset/nonexonic_distal.parquet",
-    run:
-        V = pd.read_parquet(input[0])
-        V = V[V.consequence.isin(NON_EXONIC_FULL)]
-        V[COORDINATES].to_parquet(output[0], index=False)
 
 
 rule dataset_subset_eqtl_overlap:
