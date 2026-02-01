@@ -15,3 +15,12 @@ rule all:
             "results/plots/{dataset}/model_comparison.svg",
             dataset=config["evaluate_models"].keys(),
         ),
+
+
+rule all_score_histograms:
+    input:
+        [
+            f"results/plots/score_histogram/{dataset}/{model}.svg"
+            for dataset, models in config["evaluate_models"].items()
+            for model in models
+        ],

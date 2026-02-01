@@ -50,3 +50,38 @@ rule plot_model_comparison:
 
         g.savefig(output[0])
         plt.close()
+
+
+rule plot_score_histogram:
+    input:
+        dataset=lambda wc: config["datasets"][wc.dataset],
+        preds="results/preds/{dataset}/{model}.parquet",
+    output:
+        "results/plots/score_histogram/{dataset}/{model}.svg",
+    run:
+        dataset = pl.read_parquet(input.dataset, columns=["label", "consequence_group"])
+        preds = pl.read_parquet(input.preds, columns=["score"])
+
+        # Combine dataset and predictions (row-aligned)
+        df = pl.concat([dataset, preds], how="horizontal")
+
+        # Define consequence_group order for consistent panel arrangement
+        consequence_order = df["consequence_group"].unique().sort().to_list()
+
+        g = sns.displot(
+            data=df.to_pandas(),
+            x="score",
+            row="consequence_group",
+            row_order=consequence_order,
+            hue="label",
+            kind="hist",
+            stat="density",
+            common_norm=False,
+            common_bins=True,
+            height=3,
+            facet_kws={"sharey": False},
+        )
+        g.set_titles("{row_name}")
+        g.set_axis_labels("Prediction Score", "Density")
+        g.savefig(output[0])
+        plt.close()
