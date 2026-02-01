@@ -80,7 +80,10 @@ rule gpn_star_get_llr_calibrated:
         )
         V = V.with_columns(
             pl.col("llr").abs().alias("abs_llr"),
-            pl.col("llr_calibrated").abs().alias("abs_llr_calibrated"),
+            # |llr| - |neutral|: takes abs of LLR first, then subtracts abs of neutral
+            (pl.col("llr").abs() - pl.col("llr_neutral_mean").abs()).alias(
+                "abs_llr_calibrated"
+            ),
         )
         V.select(
             ["llr", "llr_calibrated", "abs_llr", "abs_llr_calibrated"]
