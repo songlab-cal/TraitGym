@@ -1,6 +1,3 @@
-from sklearn.metrics import average_precision_score
-
-
 rule unsupervised_pred:
     input:
         features="results/features/{dataset}/{features}.parquet",
@@ -53,40 +50,41 @@ rule compute_metrics:
             nan_pct = score.null_count() / len(score) * 100
             if nan_pct > 0 and nan_pct < 0.01:
                 score = score.fill_null(score.mean())
-        rows = []
-        labels = V["label"]
-        rows.append(
-            {
-                "subset": "global",
+
+
+        def compute_subset_metrics(
+            subset_name: str, labels: pl.Series, scores: pl.Series
+        ) -> dict:
+            return {
+                "subset": subset_name,
                 "metric": "AUPRC",
-                "score": average_precision_score(labels, score),
+                "score": average_precision_score(labels, scores),
+                "se": stratified_bootstrap_se(average_precision_score, labels, scores),
                 "n_pos": labels.sum(),
                 "n_neg": len(labels) - labels.sum(),
             }
-        )
-        non_missense_mask = V["consequence_group"] != "missense_variant"
-        labels_non_missense = V.filter(non_missense_mask)["label"]
+
+
+        rows = []
+
+        # Global
+        rows.append(compute_subset_metrics("global", V["label"], score))
+
+        # Non-missense
+        mask = V["consequence_group"] != "missense_variant"
         rows.append(
-            {
-                "subset": "non-missense",
-                "metric": "AUPRC",
-                "score": average_precision_score(
-                    labels_non_missense, score.filter(non_missense_mask)
-                ),
-                "n_pos": labels_non_missense.sum(),
-                "n_neg": len(labels_non_missense) - labels_non_missense.sum(),
-            }
+            compute_subset_metrics(
+                "non-missense", V.filter(mask)["label"], score.filter(mask)
+            )
         )
+
+        # Per consequence group
         for group in V["consequence_group"].unique().sort():
             mask = V["consequence_group"] == group
-            labels_subset = V.filter(mask)["label"]
             rows.append(
-                {
-                    "subset": group,
-                    "metric": "AUPRC",
-                    "score": average_precision_score(labels_subset, score.filter(mask)),
-                    "n_pos": labels_subset.sum(),
-                    "n_neg": len(labels_subset) - labels_subset.sum(),
-                }
+                compute_subset_metrics(
+                    group, V.filter(mask)["label"], score.filter(mask)
+                )
             )
+
         pl.DataFrame(rows).write_parquet(output[0])

@@ -3,9 +3,11 @@ import numpy as np
 import pandas as pd
 import polars as pl
 import seaborn as sns
+from sklearn.metrics import average_precision_score
 
 from gpn.data import Genome
 from gpn.star.utils import get_llr, normalize_logits
+from traitgym.metrics import stratified_bootstrap_se
 from traitgym.variants import CHROMS, COORDINATES
 
 

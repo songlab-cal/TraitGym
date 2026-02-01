@@ -12,7 +12,7 @@ include: "rules/plot.smk"
 rule all:
     input:
         expand(
-            "results/plots/{dataset}/model_comparison.svg",
+            "results/plots/model_comparison/{dataset}.svg",
             dataset=config["evaluate_models"].keys(),
         ),
 

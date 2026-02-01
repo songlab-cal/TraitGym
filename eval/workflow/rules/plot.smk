@@ -6,8 +6,16 @@ rule plot_model_comparison:
             model=config["evaluate_models"][wc.dataset],
         ),
     output:
-        "results/plots/{dataset}/model_comparison.svg",
+        "results/plots/model_comparison/{dataset}.svg",
     run:
+        plots_config = config.get("plots", {})
+        models_config = plots_config.get("models", {})
+        subsets_config = plots_config.get("subsets", [])
+
+        # Build lookup dicts from config
+        subset_order = [s["name"] for s in subsets_config]
+        subset_aliases = {s["name"]: s["alias"] for s in subsets_config}
+
         models = config["evaluate_models"][wildcards.dataset]
         dfs = []
         for path, model in zip(input.metrics, models):
@@ -17,10 +25,9 @@ rule plot_model_comparison:
 
         metrics = metrics.filter(pl.col("metric") == "AUPRC")
 
-        subsets = metrics["subset"].unique().sort().to_list()
-        if "global" in subsets:
-            subsets.remove("global")
-            subsets = ["global"] + subsets
+        # Get subsets present in data, ordered by config
+        available_subsets = set(metrics["subset"].unique().to_list())
+        subsets = [s for s in subset_order if s in available_subsets]
 
         subset_info = (
             metrics.group_by("subset")
@@ -29,26 +36,59 @@ rule plot_model_comparison:
             .set_index("subset")
         )
 
-        g = sns.catplot(
-            data=metrics.to_pandas(),
-            x="score",
-            y="model",
-            col="subset",
-            col_order=subsets,
-            col_wrap=3,
-            kind="bar",
-            sharex=False,
+        n_cols = 5
+        n_rows = (len(subsets) + n_cols - 1) // n_cols
+        fig, axes = plt.subplots(
+            n_rows, n_cols, figsize=(20, 4 * n_rows), squeeze=False
         )
-        g.set_axis_labels("AUPRC", "Model")
+        axes = axes.flatten()
 
-        for ax, subset in zip(g.axes.flat, subsets):
+        for idx, subset in enumerate(subsets):
+            ax = axes[idx]
+            subset_data = metrics.filter(pl.col("subset") == subset).to_pandas()
+            # Sort by AUPRC descending (best model at top)
+            subset_data = subset_data.sort_values("score", ascending=True)
+
+            y_positions = range(len(subset_data))
+            colors = [
+                models_config.get(m, {}).get("color", f"C{i%10}")
+                for i, m in enumerate(subset_data["model"])
+            ]
+            labels = [
+                models_config.get(m, {}).get("alias", m) for m in subset_data["model"]
+            ]
+
+            # Create horizontal bar plot
+            ax.barh(y_positions, subset_data["score"], color=colors)
+
+            # Add error bars
+            ax.errorbar(
+                x=subset_data["score"],
+                y=y_positions,
+                xerr=subset_data["se"],
+                fmt="none",
+                color="black",
+                capsize=0,
+            )
+
+            ax.set_yticks(list(y_positions))
+            ax.set_yticklabels(labels)
+            ax.set_xlabel("AUPRC")
+
             n_pos = subset_info.loc[subset, "n_pos"]
             n_neg = subset_info.loc[subset, "n_neg"]
             prop_pos = n_pos / (n_pos + n_neg)
             ax.set_xlim(left=prop_pos)
-            ax.set_title(f"{subset} (n={n_pos} vs. {n_neg})")
+            subset_alias = subset_aliases.get(subset, subset)
+            ax.set_title(f"{subset_alias}\n(n={n_pos} vs. {n_neg})")
+            sns.despine(ax=ax)
 
-        g.savefig(output[0])
+            # Hide unused axes
+        for idx in range(len(subsets), len(axes)):
+            axes[idx].set_visible(False)
+
+        plt.tight_layout()
+        plt.savefig(output[0])
         plt.close()
 
 

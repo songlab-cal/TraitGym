@@ -53,3 +53,64 @@ ensembles:
   GPN-Star_abs_AlphaGenome:
     - GPN-Star-M_cLLR.plus.abs_llr_calibrated
     - AlphaGenome_L2_max.plus.all
+
+plots:
+  models:
+    GPN-MSA_LLR.minus.score:
+      alias: "GPN-MSA"
+      color: "#919191"
+    GPN-MSA_absLLR.plus.score:
+      alias: "GPN-MSA"
+      color: "#919191"
+    GPN-Star-V_cLLR.minus.llr_calibrated:
+      alias: "GPN-Star (V)"
+      color: "#2773BA"
+    GPN-Star-V_cLLR.plus.abs_llr_calibrated:
+      alias: "GPN-Star (V)"
+      color: "#2773BA"
+    GPN-Star-M_cLLR.minus.llr_calibrated:
+      alias: "GPN-Star (M)"
+      color: "#4F97DB"
+    GPN-Star-M_cLLR.plus.abs_llr_calibrated:
+      alias: "GPN-Star (M)"
+      color: "#4F97DB"
+    GPN-Star-P_cLLR.minus.llr_calibrated:
+      alias: "GPN-Star (P)"
+      color: "#95BFE6"
+    GPN-Star-P_cLLR.plus.abs_llr_calibrated:
+      alias: "GPN-Star (P)"
+      color: "#95BFE6"
+    AlphaGenome_L2_max.plus.all:
+      alias: "AlphaGenome"
+      color: "#bd683a"
+    GPN-Star_AlphaGenome:
+      alias: "GPN-Star + AlphaGenome"
+      color: "#000000"
+    GPN-Star_abs_AlphaGenome:
+      alias: "GPN-Star + AlphaGenome"
+      color: "#000000"
+    CADD.plus.score:
+      alias: "CADD"
+      color: "#E09D5A"
+
+  subsets:
+    - name: global
+      alias: "All"
+    - name: non-missense
+      alias: "Non-missense"
+    - name: missense_variant
+      alias: "Missense"
+    - name: tss_proximal
+      alias: "Promoter"
+    - name: distal
+      alias: "Distal"
+    - name: 5_prime_UTR_variant
+      alias: "5' UTR"
+    - name: 3_prime_UTR_variant
+      alias: "3' UTR"
+    - name: splicing
+      alias: "Splicing"
+    - name: non_coding_transcript_exon_variant
+      alias: "ncRNA"
+    - name: synonymous_variant
+      alias: "Synonymous"
