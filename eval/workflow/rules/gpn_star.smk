@@ -44,7 +44,7 @@ rule gpn_star_get_llr_calibrated:
         checkpoint="results/gpn_star/checkpoints/{model}",
         logits="results/gpn_star/logits/{dataset}/{model}.parquet",
     output:
-        "results/features/{dataset}/GPN-Star-{model}_LLR.parquet",
+        "results/features/{dataset}/GPN-Star-{model}_cLLR.parquet",
     wildcard_constraints:
         model="|".join(GPN_STAR_MODELS),
     params:
@@ -78,4 +78,10 @@ rule gpn_star_get_llr_calibrated:
         V = V.with_columns(
             (pl.col("llr") - pl.col("llr_neutral_mean")).alias("llr_calibrated")
         )
-        V.select(["llr", "llr_calibrated"]).write_parquet(output[0])
+        V = V.with_columns(
+            pl.col("llr").abs().alias("abs_llr"),
+            pl.col("llr_calibrated").abs().alias("abs_llr_calibrated"),
+        )
+        V.select(
+            ["llr", "llr_calibrated", "abs_llr", "abs_llr_calibrated"]
+        ).write_parquet(output[0])

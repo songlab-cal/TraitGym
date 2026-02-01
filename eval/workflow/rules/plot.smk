@@ -1,14 +1,16 @@
 rule plot_model_comparison:
     input:
-        metrics=expand(
-            "results/metrics/{{dataset}}/{model}.parquet",
-            model=config["models"],
+        metrics=lambda wc: expand(
+            "results/metrics/{dataset}/{model}.parquet",
+            dataset=wc.dataset,
+            model=config["evaluate_models"][wc.dataset],
         ),
     output:
         "results/plots/{dataset}/model_comparison.svg",
     run:
+        models = config["evaluate_models"][wildcards.dataset]
         dfs = []
-        for path, model in zip(input.metrics, config["models"]):
+        for path, model in zip(input.metrics, models):
             df = pl.read_parquet(path).with_columns(pl.lit(model).alias("model"))
             dfs.append(df)
         metrics = pl.concat(dfs)
