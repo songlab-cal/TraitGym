@@ -11,3 +11,11 @@ include: "rules/mendelian_traits.smk"
 include: "rules/smedley_et_al.smk"
 include: "rules/complex_traits.smk"
 include: "rules/ldscore.smk"
+
+
+rule all:
+    input:
+        "results/dataset/mendelian_traits_matched_9/test.parquet",
+        "results/feature_performance/mendelian_traits_matched_9.parquet",
+        "results/dataset/complex_traits_matched_9/test.parquet",
+        "results/feature_performance/complex_traits_matched_9.parquet",

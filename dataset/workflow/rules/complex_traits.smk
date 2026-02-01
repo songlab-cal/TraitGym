@@ -151,6 +151,9 @@ rule complex_traits_annotate:
         V = (
             pl.read_parquet(input[0])
             .join(ldscore, on=COORDINATES, how="left")
+            # Drops ~34 high-PIP variants with very low MAF not present in LD score file
+            # (e.g., rs115142852, rs553424940, rs534716024)
+            .filter(pl.col("ld_score").is_not_null())
             .pipe(lift_hg19_to_hg38)
             .filter(pl.col("pos") != -1)
             .pipe(filter_chroms)
@@ -178,9 +181,10 @@ rule complex_traits_full_consequence_counts:
         "results/complex_traits/full_consequence_counts.parquet",
     run:
         (
-            pl.read_parquet(input[0])
-            .group_by("consequence")
-            .agg(pl.count())
+            pl.read_parquet(input[0], columns=["label", "consequence"])
+            .filter(pl.col("label"))
+            .get_column("consequence")
+            .value_counts()
             .sort("count", descending=True)
             .write_parquet(output[0])
         )
@@ -203,3 +207,64 @@ rule complex_traits_dataset_all:
             config["tss_proximal_dist"],
             config["consequence_groups"],
         ).write_parquet(output[0])
+
+
+rule complex_traits_dataset_matched:
+    input:
+        "results/dataset/complex_traits_all/test.parquet",
+    output:
+        "results/dataset/complex_traits_matched_{k}/test.parquet",
+    run:
+        V = pl.read_parquet(input[0])
+        (
+            match_features(
+                V.filter(pl.col("label")),
+                V.filter(~pl.col("label")),
+                ["tss_dist", "exon_dist", "MAF", "ld_score"],
+                ["chrom", "consequence_final"],
+                int(wildcards.k),
+            ).write_parquet(output[0])
+        )
+
+
+rule complex_traits_matched_feature_performance:
+    input:
+        "results/dataset/complex_traits_matched_{k}/test.parquet",
+    output:
+        "results/feature_performance/complex_traits_matched_{k}.parquet",
+    run:
+        V = pl.read_parquet(input[0])
+        features = ["tss_dist", "exon_dist", "MAF", "ld_score"]
+        # Sign: +1 if higher value predicts positive, -1 if lower value predicts positive
+        sign = {"tss_dist": -1, "exon_dist": -1, "MAF": 1, "ld_score": -1}
+        rows = []
+
+        for feature in features:
+            auprc = average_precision_score(V["label"], sign[feature] * V[feature])
+            rows.append(
+                {
+                    "feature": feature,
+                    "consequence_final": "all",
+                    "auprc": auprc,
+                    "n_pos": V["label"].sum(),
+                    "n_neg": (~V["label"]).sum(),
+                }
+            )
+
+            # Per consequence_final
+            for consequence in V["consequence_final"].unique().sort():
+                subset = V.filter(pl.col("consequence_final") == consequence)
+                auprc = average_precision_score(
+                    subset["label"], sign[feature] * subset[feature]
+                )
+                rows.append(
+                    {
+                        "feature": feature,
+                        "consequence_final": consequence,
+                        "auprc": auprc,
+                        "n_pos": subset["label"].sum(),
+                        "n_neg": (~subset["label"]).sum(),
+                    }
+                )
+
+        pl.DataFrame(rows).write_parquet(output[0])
