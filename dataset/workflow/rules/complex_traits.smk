@@ -174,22 +174,6 @@ rule complex_traits_annotate:
         pl.concat(results).write_parquet(output[0])
 
 
-rule complex_traits_full_consequence_counts:
-    input:
-        "results/complex_traits/annotated.parquet",
-    output:
-        "results/complex_traits/full_consequence_counts.parquet",
-    run:
-        (
-            pl.read_parquet(input[0], columns=["label", "consequence"])
-            .filter(pl.col("label"))
-            .get_column("consequence")
-            .value_counts()
-            .sort("count", descending=True)
-            .write_parquet(output[0])
-        )
-
-
 rule complex_traits_dataset_all:
     input:
         "results/complex_traits/annotated.parquet",
@@ -225,46 +209,3 @@ rule complex_traits_dataset_matched:
                 int(wildcards.k),
             ).write_parquet(output[0])
         )
-
-
-rule complex_traits_matched_feature_performance:
-    input:
-        "results/dataset/complex_traits_matched_{k}/test.parquet",
-    output:
-        "results/feature_performance/complex_traits_matched_{k}.parquet",
-    run:
-        V = pl.read_parquet(input[0])
-        features = ["tss_dist", "exon_dist", "MAF", "ld_score"]
-        # Sign: +1 if higher value predicts positive, -1 if lower value predicts positive
-        sign = {"tss_dist": -1, "exon_dist": -1, "MAF": 1, "ld_score": -1}
-        rows = []
-
-        for feature in features:
-            auprc = average_precision_score(V["label"], sign[feature] * V[feature])
-            rows.append(
-                {
-                    "feature": feature,
-                    "consequence_final": "all",
-                    "auprc": auprc,
-                    "n_pos": V["label"].sum(),
-                    "n_neg": (~V["label"]).sum(),
-                }
-            )
-
-            # Per consequence_final
-            for consequence in V["consequence_final"].unique().sort():
-                subset = V.filter(pl.col("consequence_final") == consequence)
-                auprc = average_precision_score(
-                    subset["label"], sign[feature] * subset[feature]
-                )
-                rows.append(
-                    {
-                        "feature": feature,
-                        "consequence_final": consequence,
-                        "auprc": auprc,
-                        "n_pos": subset["label"].sum(),
-                        "n_neg": (~subset["label"]).sum(),
-                    }
-                )
-
-        pl.DataFrame(rows).write_parquet(output[0])

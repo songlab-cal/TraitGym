@@ -58,3 +58,7 @@ consequence_groups:
     - CA_flank
     - TF
     - TF_flank
+
+datasets:
+  - mendelian_traits_matched_9
+  - complex_traits_matched_9

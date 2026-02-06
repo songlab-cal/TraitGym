@@ -43,21 +43,6 @@ rule mendelian_traits_positives:
         pl.concat(results).write_parquet(output[0])
 
 
-rule mendelian_traits_full_consequence_counts:
-    input:
-        "results/mendelian_traits/positives.parquet",
-    output:
-        "results/mendelian_traits/full_consequence_counts.parquet",
-    run:
-        (
-            pl.read_parquet(input[0])
-            .group_by(["source", "consequence"])
-            .agg(pl.count())
-            .sort(["source", "count"], descending=True)
-            .write_parquet(output[0])
-        )
-
-
 rule mendelian_traits_dataset_all:
     input:
         "results/mendelian_traits/positives.parquet",
@@ -101,63 +86,3 @@ rule mendelian_traits_dataset_matched:
                 int(wildcards.k),
             ).write_parquet(output[0])
         )
-
-
-rule mendelian_traits_matched_feature_performance:
-    input:
-        "results/dataset/mendelian_traits_matched_{k}/test.parquet",
-    output:
-        "results/feature_performance/mendelian_traits_matched_{k}.parquet",
-    run:
-        V = pl.read_parquet(input[0])
-        features = ["tss_dist", "exon_dist"]
-        rows = []
-
-        for feature in features:
-            # Global AUPRC (negative distance: closer = higher score)
-            auprc = average_precision_score(V["label"], -V[feature])
-            rows.append(
-                {
-                    "feature": feature,
-                    "consequence_final": "all",
-                    "auprc": auprc,
-                    "n_pos": V["label"].sum(),
-                    "n_neg": (~V["label"]).sum(),
-                }
-            )
-
-            # Per consequence_final
-            for consequence in V["consequence_final"].unique().sort():
-                subset = V.filter(pl.col("consequence_final") == consequence)
-                auprc = average_precision_score(subset["label"], -subset[feature])
-                rows.append(
-                    {
-                        "feature": feature,
-                        "consequence_final": consequence,
-                        "auprc": auprc,
-                        "n_pos": subset["label"].sum(),
-                        "n_neg": (~subset["label"]).sum(),
-                    }
-                )
-
-        pl.DataFrame(rows).write_parquet(output[0])
-
-
-#
-# rule mendelian_traits_dataset_match_gene:
-#     input:
-#         "results/mendelian_traits/unique_additional_features.parquet",
-#     output:
-#         "results/dataset/mendelian_traits_match_gene_matched_{k,\d+}/test.parquet",
-#     run:
-#         V = pl.read_parquet(input[0])
-#         V = match_features(
-#             V.filter(pl.col("label")),
-#             V.filter(~pl.col("label")),
-#             ["AF", "tss_dist", "exon_dist"],
-#             ["chrom", "consequence", "tss_closest_gene_id", "exon_closest_gene_id"],
-#             int(wildcards.k),
-#         )
-#         V.sort(COORDINATES).write_parquet(output[0])
-#
-#

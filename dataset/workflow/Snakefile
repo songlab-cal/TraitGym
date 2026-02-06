@@ -11,11 +11,16 @@ include: "rules/mendelian_traits.smk"
 include: "rules/smedley_et_al.smk"
 include: "rules/complex_traits.smk"
 include: "rules/ldscore.smk"
+include: "rules/stats.smk"
 
 
 rule all:
     input:
-        "results/dataset/mendelian_traits_matched_9/test.parquet",
-        "results/feature_performance/mendelian_traits_matched_9.parquet",
-        "results/dataset/complex_traits_matched_9/test.parquet",
-        "results/feature_performance/complex_traits_matched_9.parquet",
+        expand(
+            "results/dataset/{dataset}/test.parquet",
+            dataset=config["datasets"],
+        ),
+        expand(
+            "results/stats/matched_feature_performance/{dataset}.tex",
+            dataset=config["datasets"],
+        ),
