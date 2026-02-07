@@ -112,11 +112,62 @@ rule complex_traits_matched_feature_performance:
         pl.DataFrame(rows).write_parquet(output[0])
 
 
+rule mendelian_traits_full_consequence_counts_to_tex:
+    input:
+        "results/stats/full_consequence_counts/mendelian_traits.parquet",
+    output:
+        "results/tex/full_consequence_counts/mendelian_traits.tex",
+    run:
+        df = pl.read_parquet(input[0])
+
+        lines = [
+            r"\begin{tabular}{llr}",
+            r"\toprule",
+            r"Source & Consequence & Count \\",
+            r"\midrule",
+        ]
+
+        for row in df.iter_rows(named=True):
+            source = row["source"].replace("_", r"\_")
+            consequence = row["consequence"].replace("_", r"\_")
+            lines.append(f"{source} & {consequence} & {row['count']} " + r"\\")
+
+        lines.extend([r"\bottomrule", r"\end{tabular}"])
+
+        with open(output[0], "w") as f:
+            f.write("\n".join(lines) + "\n")
+
+
+rule complex_traits_full_consequence_counts_to_tex:
+    input:
+        "results/stats/full_consequence_counts/complex_traits.parquet",
+    output:
+        "results/tex/full_consequence_counts/complex_traits.tex",
+    run:
+        df = pl.read_parquet(input[0])
+
+        lines = [
+            r"\begin{tabular}{lr}",
+            r"\toprule",
+            r"Consequence & Count \\",
+            r"\midrule",
+        ]
+
+        for row in df.iter_rows(named=True):
+            consequence = row["consequence"].replace("_", r"\_")
+            lines.append(f"{consequence} & {row['count']} " + r"\\")
+
+        lines.extend([r"\bottomrule", r"\end{tabular}"])
+
+        with open(output[0], "w") as f:
+            f.write("\n".join(lines) + "\n")
+
+
 rule matched_feature_performance_to_tex:
     input:
         "results/stats/matched_feature_performance/{dataset}.parquet",
     output:
-        "results/stats/matched_feature_performance/{dataset}.tex",
+        "results/tex/matched_feature_performance/{dataset}.tex",
     run:
         df = pl.read_parquet(input[0]).filter(pl.col("consequence_final") == "all")
 

@@ -21,6 +21,8 @@ rule all:
             dataset=config["datasets"],
         ),
         expand(
-            "results/stats/matched_feature_performance/{dataset}.tex",
+            "results/tex/matched_feature_performance/{dataset}.tex",
             dataset=config["datasets"],
         ),
+        "results/tex/full_consequence_counts/mendelian_traits.tex",
+        "results/tex/full_consequence_counts/complex_traits.tex",
