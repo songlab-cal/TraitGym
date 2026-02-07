@@ -113,6 +113,44 @@ rule complex_traits_matched_consequence_counts_to_tex:
         consequence_counts_to_tex(input[0], output[0])
 
 
+rule consequence_group_distribution:
+    input:
+        "results/dataset/{dataset}/test.parquet",
+    output:
+        "results/stats/consequence_group_distribution/{dataset}.parquet",
+    run:
+        df = pl.read_parquet(input[0]).filter(pl.col("label"))
+        df["consequence_group"].value_counts().sort(
+            "count", descending=True
+        ).write_parquet(output[0])
+
+
+rule plot_consequence_group_distribution:
+    input:
+        "results/stats/consequence_group_distribution/{dataset}.parquet",
+    output:
+        "results/plots/consequence_group_distribution/{dataset}.svg",
+    run:
+        group_order = config["consequence_group_order"]
+        palette = dict(
+            zip(
+                group_order.values(),
+                sns.color_palette("Set2", n_colors=len(group_order)),
+            )
+        )
+        df = pl.read_parquet(input[0])
+        counts = df.to_pandas().set_index("consequence_group")["count"]
+        counts = counts.loc[counts.index.isin(group_order.keys())]
+        labels = [f"{group_order[g]} ({c})" for g, c in counts.items()]
+        colors = [palette[group_order[g]] for g in counts.index]
+        counts.plot.pie(
+            labels=labels, colors=colors, figsize=(2.0, 2.0), labeldistance=1.3
+        )
+        plt.ylabel("")
+        plt.title(config["datasets"][wildcards.dataset])
+        plt.savefig(output[0], bbox_inches="tight")
+
+
 rule mendelian_traits_matched_feature_performance:
     input:
         "results/dataset/mendelian_traits_matched_{k}/test.parquet",

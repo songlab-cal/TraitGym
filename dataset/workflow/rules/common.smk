@@ -1,6 +1,8 @@
 from gpn.data import Genome
+import matplotlib.pyplot as plt
 import pandas as pd
 import polars as pl
+import seaborn as sns
 from cyvcf2 import VCF
 from sklearn.metrics import average_precision_score
 

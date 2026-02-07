@@ -59,6 +59,16 @@ consequence_groups:
     - TF
     - TF_flank
 
+consequence_group_order:
+  missense_variant: Missense
+  distal: Distal
+  splicing: Splicing
+  tss_proximal: Promoter
+  5_prime_UTR_variant: 5' UTR
+  non_coding_transcript_exon_variant: ncRNA
+  3_prime_UTR_variant: 3' UTR
+  synonymous_variant: Synonymous
+
 datasets:
-  - mendelian_traits_matched_9
-  - complex_traits_matched_9
+  mendelian_traits_matched_9: Mendelian traits
+  complex_traits_matched_9: Complex traits

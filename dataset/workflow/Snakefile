@@ -14,6 +14,9 @@ include: "rules/ldscore.smk"
 include: "rules/stats.smk"
 
 
+TRAIT_TYPES = ["mendelian_traits", "complex_traits"]
+
+
 rule all:
     input:
         expand(
@@ -21,14 +24,19 @@ rule all:
             dataset=config["datasets"],
         ),
         expand(
+            "results/tex/{stat}/{trait_type}.tex",
+            stat=["full_consequence_counts", "all_consequence_counts"],
+            trait_type=TRAIT_TYPES,
+        ),
+        expand(
+            "results/tex/matched_consequence_counts/{dataset}.tex",
+            dataset=config["datasets"],
+        ),
+        expand(
             "results/tex/matched_feature_performance/{dataset}.tex",
             dataset=config["datasets"],
         ),
-        "results/tex/full_consequence_counts/mendelian_traits.tex",
-        "results/tex/full_consequence_counts/complex_traits.tex",
-        "results/tex/all_consequence_counts/mendelian_traits.tex",
-        "results/tex/all_consequence_counts/complex_traits.tex",
         expand(
-            "results/tex/matched_consequence_counts/{dataset}.tex",
+            "results/plots/consequence_group_distribution/{dataset}.svg",
             dataset=config["datasets"],
         ),
