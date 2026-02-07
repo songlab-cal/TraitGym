@@ -113,8 +113,7 @@ rule plot_model_comparison_combined:
                     continue
 
                 subset_data = subset_data.sort_values("score", ascending=True)
-                show_labels = col_idx == 0
-                plot_model_bars(ax, subset_data, models_config, show_labels=show_labels)
+                plot_model_bars(ax, subset_data, models_config, show_labels=True)
 
                 # Only show x-label on bottom row
                 if row_idx == n_rows - 1:
