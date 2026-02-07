@@ -151,6 +151,26 @@ rule plot_consequence_group_distribution:
         plt.savefig(output[0], bbox_inches="tight")
 
 
+rule plot_distal_distance_distribution:
+    input:
+        "results/dataset/{dataset}/test.parquet",
+    output:
+        "results/plots/distal_distance_distribution/{dataset}.svg",
+    run:
+        df = pl.read_parquet(input[0]).filter(
+            pl.col("label") & (pl.col("consequence_group") == "distal")
+        )
+        data = df.to_pandas()
+        fig, (ax_tss, ax_exon) = plt.subplots(1, 2, figsize=(8, 3))
+        sns.histplot(data["tss_dist"], log_scale=True, ax=ax_tss)
+        ax_tss.set_xlabel("TSS distance")
+        sns.histplot(data["exon_dist"], log_scale=True, ax=ax_exon)
+        ax_exon.set_xlabel("Exon distance")
+        fig.suptitle(config["datasets"][wildcards.dataset])
+        fig.tight_layout()
+        fig.savefig(output[0])
+
+
 rule mendelian_traits_matched_feature_performance:
     input:
         "results/dataset/mendelian_traits_matched_{k}/test.parquet",
