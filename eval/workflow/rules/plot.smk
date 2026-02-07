@@ -145,6 +145,90 @@ rule plot_model_comparison_combined:
         plt.close()
 
 
+rule plot_model_comparison_combined_ensemble:
+    input:
+        metrics=[
+            f"results/metrics/{dataset}/{model}.parquet"
+            for dataset in config["evaluate_models_ensemble"]
+            for model in config["evaluate_models_ensemble"][dataset]
+        ],
+    output:
+        "results/plots/model_comparison/combined_ensemble.svg",
+    run:
+        plots_config = config.get("plots", {})
+        models_config = plots_config.get("models", {})
+        subsets_config = plots_config.get("subsets", [])
+        datasets_config = plots_config.get("datasets", {})
+        subset_order, subset_aliases = get_subset_order_and_aliases(subsets_config)
+
+        # Load all metrics with dataset info
+        all_dfs = []
+        for dataset in config["evaluate_models_ensemble"]:
+            for model in config["evaluate_models_ensemble"][dataset]:
+                path = f"results/metrics/{dataset}/{model}.parquet"
+                df = pl.read_parquet(path).with_columns(
+                    pl.lit(model).alias("model"),
+                    pl.lit(dataset).alias("dataset"),
+                )
+                all_dfs.append(df)
+        metrics = pl.concat(all_dfs)
+        metrics = metrics.filter(pl.col("metric") == "AUPRC")
+
+        # Get subsets and datasets
+        available_subsets = set(metrics["subset"].unique().to_list())
+        subsets = [s for s in subset_order if s in available_subsets]
+        datasets = list(config["evaluate_models_ensemble"].keys())
+
+        n_rows = len(subsets)
+        n_cols = len(datasets)
+        fig, axes = plt.subplots(
+            n_rows, n_cols, figsize=(4 * n_cols, 2.5 * n_rows), squeeze=False
+        )
+
+        for row_idx, subset in enumerate(subsets):
+            for col_idx, dataset in enumerate(datasets):
+                ax = axes[row_idx, col_idx]
+                subset_data = metrics.filter(
+                    (pl.col("subset") == subset) & (pl.col("dataset") == dataset)
+                ).to_pandas()
+
+                if len(subset_data) == 0:
+                    ax.set_visible(False)
+                    continue
+
+                subset_data = subset_data.sort_values("score", ascending=True)
+                plot_model_bars(ax, subset_data, models_config, show_labels=True)
+
+                # Only show x-label on bottom row
+                if row_idx == n_rows - 1:
+                    ax.set_xlabel("AUPRC")
+
+                    # Row labels (subset alias) on the right margin
+                if col_idx == n_cols - 1:
+                    subset_alias = subset_aliases.get(subset, subset)
+                    ax.annotate(
+                        subset_alias,
+                        xy=(1.02, 0.5),
+                        xycoords="axes fraction",
+                        fontsize=10,
+                        fontweight="bold",
+                        ha="left",
+                        va="center",
+                    )
+
+                    # Column labels (dataset alias) on top margin
+                if row_idx == 0:
+                    dataset_alias = datasets_config.get(dataset, {}).get(
+                        "alias", dataset
+                    )
+                    ax.set_title(dataset_alias, fontsize=12, fontweight="bold")
+
+        plt.tight_layout()
+        fig.subplots_adjust(right=0.85)  # Make room for row labels
+        plt.savefig(output[0])
+        plt.close()
+
+
 rule plot_score_histogram:
     input:
         dataset=lambda wc: config["datasets"][wc.dataset],

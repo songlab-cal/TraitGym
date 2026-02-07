@@ -15,6 +15,7 @@ rule all:
             "results/plots/model_comparison/{dataset}.svg",
             dataset=list(config["evaluate_models"].keys()) + ["combined"],
         ),
+        "results/plots/model_comparison/combined_ensemble.svg",
 
 
 rule all_score_histograms:

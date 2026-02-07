@@ -45,6 +45,16 @@ evaluate_models:
     - AlphaGenome_L2_max.plus.all
     # - GPN-Star_abs_AlphaGenome
 
+evaluate_models_ensemble:
+  mendelian_traits_matched_9:
+    - GPN-Star-M_cLLR.minus.llr_calibrated
+    - AlphaGenome_L2_max.plus.all
+    - GPN-Star_AlphaGenome
+  complex_traits_matched_9:
+    - GPN-Star-M_cLLR.plus.abs_llr_calibrated
+    - AlphaGenome_L2_max.plus.all
+    - GPN-Star_abs_AlphaGenome
+
 ensembles:
   GPN-Star_AlphaGenome:
     - GPN-Star-M_cLLR.minus.llr_calibrated
@@ -90,10 +100,10 @@ plots:
       alias: "AlphaGenome"
       color: "#bd683a"
     GPN-Star_AlphaGenome:
-      alias: "GPN-Star + AlphaGenome"
+      alias: "GPN-Star +\nAlphaGenome"
       color: "#000000"
     GPN-Star_abs_AlphaGenome:
-      alias: "GPN-Star + AlphaGenome"
+      alias: "GPN-Star +\nAlphaGenome"
       color: "#000000"
     CADD.plus.score:
       alias: "CADD"
