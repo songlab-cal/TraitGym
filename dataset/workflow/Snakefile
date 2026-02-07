@@ -26,3 +26,9 @@ rule all:
         ),
         "results/tex/full_consequence_counts/mendelian_traits.tex",
         "results/tex/full_consequence_counts/complex_traits.tex",
+        "results/tex/all_consequence_counts/mendelian_traits.tex",
+        "results/tex/all_consequence_counts/complex_traits.tex",
+        expand(
+            "results/tex/matched_consequence_counts/{dataset}.tex",
+            dataset=config["datasets"],
+        ),

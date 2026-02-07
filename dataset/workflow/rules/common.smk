@@ -6,6 +6,12 @@ from sklearn.metrics import average_precision_score
 
 from traitgym.intervals import add_exon, add_tss, build_dataset
 from traitgym.matching import match_features
+from traitgym.stats import (
+    consequence_counts,
+    source_consequence_counts,
+    consequence_counts_to_tex,
+    source_consequence_counts_to_tex,
+)
 from traitgym.variants import (
     COORDINATES,
     NUCLEOTIDES,

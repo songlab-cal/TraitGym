@@ -79,3 +79,11 @@ Don't show or discuss the current implementation unless specifically requested.
 
 ### No Premature Generalizations
 If you are asked to implement a specific backend, just stick to that. Do not generalize to other common or related use-cases. You can offer to implement these, but only do so if explicitly instructed to.
+
+## Snakemake Safety Rules
+
+- **NEVER touch upstream files** to trigger downstream rules — use `--forcerun <rule>` instead
+- Failed snakemake runs **delete incomplete outputs**, so triggering unnecessary upstream jobs can destroy existing data
+- When only rule code changed (not data), use `--forcerun <rule>` on the specific rule
+- **Always dry-run first** (`-n`) and verify the full job list before executing
+- Ask the user before running snakemake if there's any risk of recomputing expensive upstream steps

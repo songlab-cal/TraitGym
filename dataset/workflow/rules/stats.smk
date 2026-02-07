@@ -4,13 +4,16 @@ rule mendelian_traits_full_consequence_counts:
     output:
         "results/stats/full_consequence_counts/mendelian_traits.parquet",
     run:
-        (
-            pl.read_parquet(input[0])
-            .group_by(["source", "consequence"])
-            .agg(pl.count())
-            .sort(["source", "count"], descending=True)
-            .write_parquet(output[0])
-        )
+        source_consequence_counts(pl.read_parquet(input[0])).write_parquet(output[0])
+
+
+rule mendelian_traits_full_consequence_counts_to_tex:
+    input:
+        "results/stats/full_consequence_counts/mendelian_traits.parquet",
+    output:
+        "results/tex/full_consequence_counts/mendelian_traits.tex",
+    run:
+        source_consequence_counts_to_tex(input[0], output[0])
 
 
 rule complex_traits_full_consequence_counts:
@@ -19,14 +22,95 @@ rule complex_traits_full_consequence_counts:
     output:
         "results/stats/full_consequence_counts/complex_traits.parquet",
     run:
-        (
-            pl.read_parquet(input[0], columns=["label", "consequence"])
-            .filter(pl.col("label"))
-            .get_column("consequence")
-            .value_counts()
-            .sort("count", descending=True)
-            .write_parquet(output[0])
+        df = pl.read_parquet(input[0], columns=["label", "consequence"]).filter(
+            pl.col("label")
         )
+        consequence_counts(df).write_parquet(output[0])
+
+
+rule complex_traits_full_consequence_counts_to_tex:
+    input:
+        "results/stats/full_consequence_counts/complex_traits.parquet",
+    output:
+        "results/tex/full_consequence_counts/complex_traits.tex",
+    run:
+        consequence_counts_to_tex(input[0], output[0])
+
+
+rule mendelian_traits_all_consequence_counts:
+    input:
+        "results/dataset/mendelian_traits_all/test.parquet",
+    output:
+        "results/stats/all_consequence_counts/mendelian_traits.parquet",
+    run:
+        df = pl.read_parquet(input[0]).filter(pl.col("label"))
+        source_consequence_counts(df).write_parquet(output[0])
+
+
+rule mendelian_traits_all_consequence_counts_to_tex:
+    input:
+        "results/stats/all_consequence_counts/mendelian_traits.parquet",
+    output:
+        "results/tex/all_consequence_counts/mendelian_traits.tex",
+    run:
+        source_consequence_counts_to_tex(input[0], output[0])
+
+
+rule complex_traits_all_consequence_counts:
+    input:
+        "results/dataset/complex_traits_all/test.parquet",
+    output:
+        "results/stats/all_consequence_counts/complex_traits.parquet",
+    run:
+        df = pl.read_parquet(input[0]).filter(pl.col("label"))
+        consequence_counts(df).write_parquet(output[0])
+
+
+rule complex_traits_all_consequence_counts_to_tex:
+    input:
+        "results/stats/all_consequence_counts/complex_traits.parquet",
+    output:
+        "results/tex/all_consequence_counts/complex_traits.tex",
+    run:
+        consequence_counts_to_tex(input[0], output[0])
+
+
+rule mendelian_traits_matched_consequence_counts:
+    input:
+        "results/dataset/mendelian_traits_matched_{k}/test.parquet",
+    output:
+        "results/stats/matched_consequence_counts/mendelian_traits_matched_{k}.parquet",
+    run:
+        df = pl.read_parquet(input[0]).filter(pl.col("label"))
+        source_consequence_counts(df).write_parquet(output[0])
+
+
+rule mendelian_traits_matched_consequence_counts_to_tex:
+    input:
+        "results/stats/matched_consequence_counts/mendelian_traits_matched_{k}.parquet",
+    output:
+        "results/tex/matched_consequence_counts/mendelian_traits_matched_{k}.tex",
+    run:
+        source_consequence_counts_to_tex(input[0], output[0])
+
+
+rule complex_traits_matched_consequence_counts:
+    input:
+        "results/dataset/complex_traits_matched_{k}/test.parquet",
+    output:
+        "results/stats/matched_consequence_counts/complex_traits_matched_{k}.parquet",
+    run:
+        df = pl.read_parquet(input[0]).filter(pl.col("label"))
+        consequence_counts(df).write_parquet(output[0])
+
+
+rule complex_traits_matched_consequence_counts_to_tex:
+    input:
+        "results/stats/matched_consequence_counts/complex_traits_matched_{k}.parquet",
+    output:
+        "results/tex/matched_consequence_counts/complex_traits_matched_{k}.tex",
+    run:
+        consequence_counts_to_tex(input[0], output[0])
 
 
 rule mendelian_traits_matched_feature_performance:
@@ -110,57 +194,6 @@ rule complex_traits_matched_feature_performance:
                 )
 
         pl.DataFrame(rows).write_parquet(output[0])
-
-
-rule mendelian_traits_full_consequence_counts_to_tex:
-    input:
-        "results/stats/full_consequence_counts/mendelian_traits.parquet",
-    output:
-        "results/tex/full_consequence_counts/mendelian_traits.tex",
-    run:
-        df = pl.read_parquet(input[0])
-
-        lines = [
-            r"\begin{tabular}{llr}",
-            r"\toprule",
-            r"Source & Consequence & Count \\",
-            r"\midrule",
-        ]
-
-        for row in df.iter_rows(named=True):
-            source = row["source"].replace("_", r"\_")
-            consequence = row["consequence"].replace("_", r"\_")
-            lines.append(f"{source} & {consequence} & {row['count']} " + r"\\")
-
-        lines.extend([r"\bottomrule", r"\end{tabular}"])
-
-        with open(output[0], "w") as f:
-            f.write("\n".join(lines) + "\n")
-
-
-rule complex_traits_full_consequence_counts_to_tex:
-    input:
-        "results/stats/full_consequence_counts/complex_traits.parquet",
-    output:
-        "results/tex/full_consequence_counts/complex_traits.tex",
-    run:
-        df = pl.read_parquet(input[0])
-
-        lines = [
-            r"\begin{tabular}{lr}",
-            r"\toprule",
-            r"Consequence & Count \\",
-            r"\midrule",
-        ]
-
-        for row in df.iter_rows(named=True):
-            consequence = row["consequence"].replace("_", r"\_")
-            lines.append(f"{consequence} & {row['count']} " + r"\\")
-
-        lines.extend([r"\bottomrule", r"\end{tabular}"])
-
-        with open(output[0], "w") as f:
-            f.write("\n".join(lines) + "\n")
 
 
 rule matched_feature_performance_to_tex:
