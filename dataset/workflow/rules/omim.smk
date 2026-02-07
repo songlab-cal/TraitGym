@@ -108,7 +108,7 @@ rule clinvar_omim:
         "results/clinvar/all.parquet",
         "results/clinvar/submission_summary_omim.parquet",
     output:
-        "results/clinvar/omim.parquet",
+        "results/omim/variants.parquet",
     run:
         V = pl.read_parquet(input[0])
         df = pl.read_parquet(input[1])
