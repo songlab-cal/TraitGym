@@ -262,3 +262,118 @@ rule plot_score_histogram:
         g.set_axis_labels("Prediction Score", "Density")
         g.savefig(output[0])
         plt.close()
+
+
+rule plot_auprc_by_distance:
+    input:
+        dataset=lambda wc: config["datasets"][wc.dataset],
+        preds=lambda wc: expand(
+            "results/preds/{dataset}/{model}.parquet",
+            dataset=wc.dataset,
+            model=config["evaluate_models"][wc.dataset],
+        ),
+    output:
+        "results/plots/auprc_by_distance/{dataset}.svg",
+    run:
+        models_config = config.get("plots", {}).get("models", {})
+        models = config["evaluate_models"][wildcards.dataset]
+
+        dataset = pl.read_parquet(
+            input.dataset,
+            columns=["label", "consequence_group", "tss_dist", "exon_dist"],
+        )
+
+        # Load predictions for each model (row-aligned with dataset)
+        pred_dfs = {}
+        for path, model in zip(input.preds, models):
+            pred_dfs[model] = pl.read_parquet(path, columns=["score"])
+
+            # Filter to distal variants
+        distal_mask = dataset["consequence_group"] == "distal"
+        dataset_distal = dataset.filter(distal_mask)
+
+        N_BINS = 10
+        distance_metrics = {
+            "tss_dist": "TSS distance (bp)",
+            "exon_dist": "Exon distance (bp)",
+        }
+
+        # Build a long-form DataFrame for seaborn
+        rows = []
+        for dist_col, dist_label in distance_metrics.items():
+            distances = dataset_distal[dist_col].to_numpy().astype(float)
+            dist_min = max(distances.min(), 1)
+            bin_edges = np.logspace(
+                np.log10(dist_min), np.log10(distances.max()), N_BINS + 1
+            )
+            bin_midpoints = np.sqrt(bin_edges[:-1] * bin_edges[1:])
+            bin_indices = np.digitize(distances, bin_edges, right=True)
+            bin_indices = np.clip(bin_indices, 1, N_BINS)
+
+            for model in models:
+                scores_distal = pred_dfs[model]["score"].filter(distal_mask)
+                labels_distal = dataset_distal["label"]
+
+                for b in range(1, N_BINS + 1):
+                    bin_mask = bin_indices == b
+                    if bin_mask.sum() < 2:
+                        continue
+                    bin_labels = labels_distal.filter(pl.Series(bin_mask))
+                    bin_scores = scores_distal.filter(pl.Series(bin_mask))
+                    if bin_labels.sum() == 0 or bin_labels.sum() == len(bin_labels):
+                        continue
+
+                    auprc = average_precision_score(
+                        bin_labels.to_numpy(), bin_scores.to_numpy()
+                    )
+                    model_cfg = models_config.get(model, {})
+                    rows.append(
+                        {
+                            "distance_metric": dist_label,
+                            "bin_midpoint": bin_midpoints[b - 1],
+                            "auprc": auprc,
+                            "model": model_cfg.get("alias", model),
+                        }
+                    )
+
+        plot_df = pd.DataFrame(rows)
+
+        # Build palette from config
+        palette = {}
+        for model in models:
+            model_cfg = models_config.get(model, {})
+            alias = model_cfg.get("alias", model)
+            color = model_cfg.get("color", None)
+            if color:
+                palette[alias] = color
+
+
+        def format_distance(x, _pos):
+            if x >= 1_000_000:
+                return f"{x/1_000_000:.1f}M"
+            if x >= 1_000:
+                return f"{x/1_000:.0f}k"
+            return f"{x:.0f}"
+
+
+        g = sns.relplot(
+            data=plot_df,
+            x="bin_midpoint",
+            y="auprc",
+            hue="model",
+            col="distance_metric",
+            palette=palette,
+            kind="line",
+            marker="o",
+            markersize=5,
+            facet_kws={"sharex": False, "sharey": False},
+            height=5,
+            aspect=1.2,
+        )
+        g.set_titles("{col_name}")
+        g.set_axis_labels("Distance (bp)", "AUPRC")
+        for ax in g.axes.flat:
+            ax.set_xscale("log")
+            ax.xaxis.set_major_formatter(plt.FuncFormatter(format_distance))
+        g.savefig(output[0])
+        plt.close()

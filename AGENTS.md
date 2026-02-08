@@ -88,4 +88,4 @@ If you are asked to implement a specific backend, just stick to that. Do not gen
 - **Always dry-run first** (`-n`) and verify the full job list before executing
 - Ask the user before running snakemake if there's any risk of recomputing expensive upstream steps
 - When `--forcerun` still pulls in upstream jobs (e.g. due to missing provenance metadata), use `--allowed-rules <rule>` to restrict execution to only that rule
-- Run snakemake via `uv run snakemake` and always pass `--cores N`
+- Run snakemake via `uv run snakemake --cores all -n`
