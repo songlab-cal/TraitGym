@@ -45,6 +45,23 @@ evaluate_models:
     - AlphaGenome_L2_max.plus.all
     # - GPN-Star_abs_AlphaGenome
 
+evaluate_models_promoterai_covered:
+  mendelian_traits_matched_9:
+    - PromoterAI.plus.score
+    - GPN-MSA_LLR.minus.score
+    - GPN-Star-V_cLLR.minus.llr_calibrated
+    - GPN-Star-M_cLLR.minus.llr_calibrated
+    - GPN-Star-P_cLLR.minus.llr_calibrated
+    - AlphaGenome_L2_max.plus.all
+  complex_traits_matched_9:
+    - PromoterAI.plus.score
+    - CADD.plus.score
+    - GPN-MSA_absLLR.plus.score
+    - GPN-Star-V_cLLR.plus.abs_llr_calibrated
+    - GPN-Star-M_cLLR.plus.abs_llr_calibrated
+    - GPN-Star-P_cLLR.plus.abs_llr_calibrated
+    - AlphaGenome_L2_max.plus.all
+
 evaluate_models_ensemble:
   mendelian_traits_matched_9:
     - GPN-Star-M_cLLR.minus.llr_calibrated
@@ -108,6 +125,9 @@ plots:
     CADD.plus.score:
       alias: "CADD"
       color: "#E09D5A"
+    PromoterAI.plus.score:
+      alias: "PromoterAI"
+      color: "#6B4C9A"
 
   subsets:
     - name: global

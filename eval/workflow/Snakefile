@@ -6,6 +6,7 @@ include: "rules/precomputed.smk"
 include: "rules/gpn_star.smk"
 include: "rules/alphagenome.smk"
 include: "rules/model.smk"
+include: "rules/promoterai.smk"
 include: "rules/plot.smk"
 
 
