@@ -30,12 +30,15 @@ datasets:
 
 evaluate_models:
   mendelian_traits_matched_9:
+    - CADD.plus.score
     - GPN-MSA_LLR.minus.score
     - GPN-Star-V_cLLR.minus.llr_calibrated
     - GPN-Star-M_cLLR.minus.llr_calibrated
     - GPN-Star-P_cLLR.minus.llr_calibrated
     - AlphaGenome_L2_max.plus.all
-    # - GPN-Star_AlphaGenome
+    - phyloP-100v.plus.score
+    - phyloP-241m.plus.score
+    - phastCons-43p.plus.score
   complex_traits_matched_9:
     - CADD.plus.score
     - GPN-MSA_absLLR.plus.score
@@ -43,16 +46,22 @@ evaluate_models:
     - GPN-Star-M_cLLR.plus.abs_llr_calibrated
     - GPN-Star-P_cLLR.plus.abs_llr_calibrated
     - AlphaGenome_L2_max.plus.all
-    # - GPN-Star_abs_AlphaGenome
+    - phyloP-100v.plus.score
+    - phyloP-241m.plus.score
+    - phastCons-43p.plus.score
 
 evaluate_models_promoterai_covered:
   mendelian_traits_matched_9:
     - PromoterAI.plus.score
+    - CADD.plus.score
     - GPN-MSA_LLR.minus.score
     - GPN-Star-V_cLLR.minus.llr_calibrated
     - GPN-Star-M_cLLR.minus.llr_calibrated
     - GPN-Star-P_cLLR.minus.llr_calibrated
     - AlphaGenome_L2_max.plus.all
+    - phyloP-100v.plus.score
+    - phyloP-241m.plus.score
+    - phastCons-43p.plus.score
   complex_traits_matched_9:
     - PromoterAI.plus.score
     - CADD.plus.score
@@ -61,15 +70,22 @@ evaluate_models_promoterai_covered:
     - GPN-Star-M_cLLR.plus.abs_llr_calibrated
     - GPN-Star-P_cLLR.plus.abs_llr_calibrated
     - AlphaGenome_L2_max.plus.all
+    - phyloP-100v.plus.score
+    - phyloP-241m.plus.score
+    - phastCons-43p.plus.score
 
 evaluate_models_spliceai_covered:
   mendelian_traits_matched_9:
     - SpliceAI.plus.score
+    - CADD.plus.score
     - GPN-MSA_LLR.minus.score
     - GPN-Star-V_cLLR.minus.llr_calibrated
     - GPN-Star-M_cLLR.minus.llr_calibrated
     - GPN-Star-P_cLLR.minus.llr_calibrated
     - AlphaGenome_L2_max.plus.all
+    - phyloP-100v.plus.score
+    - phyloP-241m.plus.score
+    - phastCons-43p.plus.score
   complex_traits_matched_9:
     - SpliceAI.plus.score
     - CADD.plus.score
@@ -78,6 +94,9 @@ evaluate_models_spliceai_covered:
     - GPN-Star-M_cLLR.plus.abs_llr_calibrated
     - GPN-Star-P_cLLR.plus.abs_llr_calibrated
     - AlphaGenome_L2_max.plus.all
+    - phyloP-100v.plus.score
+    - phyloP-241m.plus.score
+    - phastCons-43p.plus.score
 
 evaluate_models_ensemble:
   mendelian_traits_matched_9:
@@ -148,6 +167,15 @@ plots:
     SpliceAI.plus.score:
       alias: "SpliceAI"
       color: "#5AAE61"
+    phyloP-100v.plus.score:
+      alias: "phyloP (100v)"
+      color: "#7B9971"
+    phyloP-241m.plus.score:
+      alias: "phyloP (241m)"
+      color: "#4A7C3F"
+    phastCons-43p.plus.score:
+      alias: "phastCons (43p)"
+      color: "#2D5A1E"
 
   subsets:
     - name: tss_proximal

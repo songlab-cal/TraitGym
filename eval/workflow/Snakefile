@@ -8,6 +8,7 @@ include: "rules/alphagenome.smk"
 include: "rules/model.smk"
 include: "rules/promoterai.smk"
 include: "rules/spliceai.smk"
+include: "rules/conservation.smk"
 include: "rules/plot.smk"
 
 

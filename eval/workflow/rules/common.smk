@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import polars as pl
+import pyBigWig
 import seaborn as sns
 from sklearn.metrics import average_precision_score
 
