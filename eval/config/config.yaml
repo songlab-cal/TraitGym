@@ -150,12 +150,6 @@ plots:
       color: "#5AAE61"
 
   subsets:
-    - name: global
-      alias: "All"
-    - name: non-missense
-      alias: "Non-missense"
-    - name: missense_variant
-      alias: "Missense"
     - name: tss_proximal
       alias: "Promoter"
     - name: distal
@@ -168,5 +162,3 @@ plots:
       alias: "Splicing"
     - name: non_coding_transcript_exon_variant
       alias: "ncRNA"
-    - name: synonymous_variant
-      alias: "Synonymous"

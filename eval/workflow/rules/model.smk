@@ -67,17 +67,6 @@ rule compute_metrics:
 
         rows = []
 
-        # Global
-        rows.append(compute_subset_metrics("global", V["label"], score))
-
-        # Non-missense
-        mask = V["consequence_group"] != "missense_variant"
-        rows.append(
-            compute_subset_metrics(
-                "non-missense", V.filter(mask)["label"], score.filter(mask)
-            )
-        )
-
         # Per consequence group
         for group in V["consequence_group"].unique().sort():
             mask = V["consequence_group"] == group
