@@ -32,6 +32,18 @@ rule all:
         ),
 
 
+rule all_MRR_plots:
+    input:
+        expand(
+            "results/plots/mrr/{dataset}.svg",
+            dataset=[
+                d
+                for d in config["evaluate_models_mrr"]
+                if d.endswith("_traits_matched_9")
+            ],
+        ),
+
+
 rule all_metric_experiments_matched_one:
     input:
         "results/plots/model_comparison/mendelian_traits_gene_matched_1.svg",

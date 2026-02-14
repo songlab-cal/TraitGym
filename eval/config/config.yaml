@@ -49,6 +49,26 @@ evaluate_models_mrr:
     - phyloP-100v.plus.score
     - phyloP-241m.plus.score
     - phastCons-43p.plus.score
+  mendelian_traits_matched_9:
+    - CADD.plus.score
+    - GPN-MSA_LLR.minus.score
+    - GPN-Star-V_cLLR.minus.llr_calibrated
+    - GPN-Star-M_cLLR.minus.llr_calibrated
+    - GPN-Star-P_cLLR.minus.llr_calibrated
+    - AlphaGenome_L2_max.plus.all
+    - phyloP-100v.plus.score
+    - phyloP-241m.plus.score
+    - phastCons-43p.plus.score
+  complex_traits_matched_9:
+    - CADD.plus.score
+    - GPN-MSA_absLLR.plus.score
+    - GPN-Star-V_cLLR.plus.abs_llr_calibrated
+    - GPN-Star-M_cLLR.plus.abs_llr_calibrated
+    - GPN-Star-P_cLLR.plus.abs_llr_calibrated
+    - AlphaGenome_L2_max.plus.all
+    - phyloP-100v.plus.score
+    - phyloP-241m.plus.score
+    - phastCons-43p.plus.score
 
 evaluate_models:
   mendelian_traits_matched_9:
