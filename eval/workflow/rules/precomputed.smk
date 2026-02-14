@@ -78,7 +78,7 @@ rule precomputed_features:
     output:
         "results/features/{dataset}/{model}.parquet",
     wildcard_constraints:
-        model="|".join(PRECOMPUTED_MODELS),
+        model="|".join(PRECOMPUTED_FEATURE_MODELS),
     threads: workflow.cores
     run:
         V = pl.read_parquet(input.dataset, columns=COORDINATES)

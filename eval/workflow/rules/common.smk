@@ -13,6 +13,7 @@ from traitgym.variants import CHROMS, COORDINATES
 
 
 PRECOMPUTED_MODELS = list(config["precomputed"].keys())
+PRECOMPUTED_FEATURE_MODELS = PRECOMPUTED_MODELS + ["SpliceAI"]
 GPN_STAR_MODELS = list(config.get("gpn_star", {}).keys())
 
 
