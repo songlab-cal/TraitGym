@@ -30,3 +30,9 @@ rule all:
             "results/plots/auprc_by_distance/{dataset}.svg",
             dataset=config["evaluate_models"].keys(),
         ),
+
+
+rule all_metric_experiments_matched_one:
+    input:
+        "results/plots/model_comparison/mendelian_traits_gene_matched_1.svg",
+        "results/plots/pairwise/mendelian_traits_gene_matched_1.svg",

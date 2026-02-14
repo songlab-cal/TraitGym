@@ -13,6 +13,7 @@ def plot_model_bars(
     subset_data: pd.DataFrame,
     models_config: dict[str, Any],
     show_labels: bool = True,
+    baseline: float | None = None,
 ) -> None:
     """
     Plot horizontal bar chart with error bars for model comparison.
@@ -23,6 +24,7 @@ def plot_model_bars(
                      Should be pre-sorted by score (ascending for top=best)
         models_config: Config dict mapping model names to {alias, color}
         show_labels: Whether to show y-axis labels (model names)
+        baseline: x-axis left limit (random baseline). If None, uses n_pos/(n_pos+n_neg).
     """
     y_positions = range(len(subset_data))
     colors = [
@@ -52,11 +54,12 @@ def plot_model_bars(
     else:
         ax.set_yticklabels([])
 
-    # Set x-axis limit based on proportion of positives (baseline)
-    n_pos = subset_data["n_pos"].iloc[0]
-    n_neg = subset_data["n_neg"].iloc[0]
-    prop_pos = n_pos / (n_pos + n_neg)
-    ax.set_xlim(left=prop_pos)
+    if baseline is not None:
+        ax.set_xlim(left=baseline)
+    else:
+        n_pos = subset_data["n_pos"].iloc[0]
+        n_neg = subset_data["n_neg"].iloc[0]
+        ax.set_xlim(left=n_pos / (n_pos + n_neg))
 
     sns.despine(ax=ax)
 

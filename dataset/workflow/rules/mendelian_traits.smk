@@ -84,3 +84,26 @@ rule mendelian_traits_dataset_matched:
                 int(wildcards.k),
             ).write_parquet(output[0])
         )
+
+
+rule mendelian_traits_dataset_gene_matched:
+    input:
+        "results/dataset/mendelian_traits_all/test.parquet",
+    output:
+        "results/dataset/mendelian_traits_gene_matched_{k}/test.parquet",
+    run:
+        V = pl.read_parquet(input[0])
+        (
+            match_features(
+                V.filter(pl.col("label")),
+                V.filter(~pl.col("label")),
+                ["tss_dist", "exon_dist"],
+                [
+                    "chrom",
+                    "consequence_final",
+                    "tss_closest_gene_id",
+                    "exon_closest_gene_id",
+                ],
+                int(wildcards.k),
+            ).write_parquet(output[0])
+        )

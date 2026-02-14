@@ -27,6 +27,28 @@ datasets:
   mendelian_traits_matched_9: "../dataset/results/dataset/mendelian_traits_matched_9/test.parquet"
   complex_traits_matched_9: "../dataset/results/dataset/complex_traits_matched_9/test.parquet"
   # mendelian_traits_all: "../dataset/results/dataset/mendelian_traits_all/test.parquet"
+  mendelian_traits_gene_matched_1: "../dataset/results/dataset/mendelian_traits_gene_matched_1/test.parquet"
+  mendelian_traits_gene_matched_9: "../dataset/results/dataset/mendelian_traits_gene_matched_9/test.parquet"
+
+evaluate_models_pairwise:
+  mendelian_traits_gene_matched_1:
+    - CADD.plus.score
+    - GPN-MSA_LLR.minus.score
+    - phyloP-100v.plus.score
+    - phyloP-241m.plus.score
+    - phastCons-43p.plus.score
+    - GPN-Star-V_cLLR.minus.llr_calibrated
+    - GPN-Star-M_cLLR.minus.llr_calibrated
+    - GPN-Star-P_cLLR.minus.llr_calibrated
+    - AlphaGenome_L2_max.plus.all
+
+evaluate_models_mrr:
+  mendelian_traits_gene_matched_9:
+    - CADD.plus.score
+    - GPN-MSA_LLR.minus.score
+    - phyloP-100v.plus.score
+    - phyloP-241m.plus.score
+    - phastCons-43p.plus.score
 
 evaluate_models:
   mendelian_traits_matched_9:
@@ -49,7 +71,16 @@ evaluate_models:
     - phyloP-100v.plus.score
     - phyloP-241m.plus.score
     - phastCons-43p.plus.score
-
+  mendelian_traits_gene_matched_1:
+    - CADD.plus.score
+    - GPN-MSA_LLR.minus.score
+    - phyloP-100v.plus.score
+    - phyloP-241m.plus.score
+    - phastCons-43p.plus.score
+    - GPN-Star-V_cLLR.minus.llr_calibrated
+    - GPN-Star-M_cLLR.minus.llr_calibrated
+    - GPN-Star-P_cLLR.minus.llr_calibrated
+    - AlphaGenome_L2_max.plus.all
 evaluate_models_promoterai_covered:
   mendelian_traits_matched_9:
     - PromoterAI.plus.score

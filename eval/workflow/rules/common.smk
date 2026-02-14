@@ -8,7 +8,12 @@ from sklearn.metrics import average_precision_score
 
 from gpn.data import Genome
 from gpn.star.utils import get_llr, normalize_logits
-from traitgym.metrics import stratified_bootstrap_se
+from traitgym.metrics import (
+    iid_mean_se,
+    mean_reciprocal_rank_scores,
+    pairwise_accuracy_scores,
+    stratified_bootstrap_se,
+)
 from traitgym.plotting import get_subset_order_and_aliases, plot_model_bars
 from traitgym.variants import CHROMS, COORDINATES
 

@@ -3,7 +3,12 @@
 import polars as pl
 from sklearn.metrics import average_precision_score
 
-from traitgym.metrics import stratified_bootstrap_se
+from traitgym.metrics import (
+    iid_mean_se,
+    mean_reciprocal_rank_scores,
+    pairwise_accuracy_scores,
+    stratified_bootstrap_se,
+)
 
 
 class TestStratifiedBootstrapSE:
@@ -42,3 +47,81 @@ class TestStratifiedBootstrapSE:
         # Both should be reasonable positive values
         assert se_50 > 0
         assert se_100 > 0
+
+
+class TestPairwiseAccuracyScores:
+    def test_perfect_predictions(self) -> None:
+        labels = pl.Series([True, False, True, False])
+        scores = pl.Series([1.0, 0.0, 1.0, 0.0])
+        match_groups = pl.Series([0, 0, 1, 1])
+        result = pairwise_accuracy_scores(labels, scores, match_groups)
+        assert result.to_list() == [1.0, 1.0]
+
+    def test_wrong_predictions(self) -> None:
+        labels = pl.Series([True, False, True, False])
+        scores = pl.Series([0.0, 1.0, 0.0, 1.0])
+        match_groups = pl.Series([0, 0, 1, 1])
+        result = pairwise_accuracy_scores(labels, scores, match_groups)
+        assert result.to_list() == [0.0, 0.0]
+
+    def test_ties(self) -> None:
+        labels = pl.Series([True, False])
+        scores = pl.Series([0.5, 0.5])
+        match_groups = pl.Series([0, 0])
+        result = pairwise_accuracy_scores(labels, scores, match_groups)
+        assert result.to_list() == [0.5]
+
+    def test_mean_is_accuracy(self) -> None:
+        labels = pl.Series([True, False, True, False, True, False])
+        scores = pl.Series([0.9, 0.1, 0.3, 0.7, 0.5, 0.5])
+        match_groups = pl.Series([0, 0, 1, 1, 2, 2])
+        result = pairwise_accuracy_scores(labels, scores, match_groups)
+        # Group 0: 1.0, Group 1: 0.0, Group 2: 0.5
+        assert result.mean() == 0.5
+
+
+class TestMeanReciprocalRankScores:
+    def test_positive_ranked_first(self) -> None:
+        labels = pl.Series([True, False, False])
+        scores = pl.Series([1.0, 0.5, 0.2])
+        match_groups = pl.Series([0, 0, 0])
+        result = mean_reciprocal_rank_scores(labels, scores, match_groups)
+        assert result.to_list() == [1.0]
+
+    def test_positive_ranked_last(self) -> None:
+        labels = pl.Series([True, False, False])
+        scores = pl.Series([0.1, 0.5, 0.9])
+        match_groups = pl.Series([0, 0, 0])
+        result = mean_reciprocal_rank_scores(labels, scores, match_groups)
+        assert result.to_list() == [1.0 / 3.0]
+
+    def test_multiple_groups(self) -> None:
+        labels = pl.Series([True, False, True, False])
+        scores = pl.Series([1.0, 0.0, 0.0, 1.0])
+        match_groups = pl.Series([0, 0, 1, 1])
+        result = mean_reciprocal_rank_scores(labels, scores, match_groups)
+        # Group 0: rank 1 -> 1.0, Group 1: rank 2 -> 0.5
+        assert result.to_list() == [1.0, 0.5]
+        assert result.mean() == 0.75
+
+    def test_1_to_9_matching(self) -> None:
+        labels = pl.Series([True] + [False] * 9)
+        scores = pl.Series([0.5] + [0.1 * i for i in range(9, 0, -1)])
+        match_groups = pl.Series([0] * 10)
+        result = mean_reciprocal_rank_scores(labels, scores, match_groups)
+        assert len(result) == 1
+
+
+class TestIidMeanSe:
+    def test_constant_values(self) -> None:
+        values = pl.Series([0.5, 0.5, 0.5])
+        mean, se = iid_mean_se(values)
+        assert mean == 0.5
+        assert se == 0.0
+
+    def test_known_values(self) -> None:
+        values = pl.Series([1.0, 0.0])
+        mean, se = iid_mean_se(values)
+        assert mean == 0.5
+        import math
+        assert abs(se - values.std() / math.sqrt(2)) < 1e-10

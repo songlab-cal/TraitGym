@@ -377,3 +377,117 @@ rule plot_auprc_by_distance:
             ax.xaxis.set_major_formatter(plt.FuncFormatter(format_distance))
         g.savefig(output[0])
         plt.close()
+
+
+PAIRWISE_BASELINE = 0.5
+MRR_BASELINE_10 = sum(1 / i for i in range(1, 11)) / 10
+
+
+rule plot_pairwise:
+    input:
+        metrics=lambda wc: expand(
+            "results/metrics_pairwise/{dataset}/{model}.parquet",
+            dataset=wc.dataset,
+            model=config["evaluate_models_pairwise"][wc.dataset],
+        ),
+    output:
+        "results/plots/pairwise/{dataset}.svg",
+    run:
+        plots_config = config.get("plots", {})
+        models_config = plots_config.get("models", {})
+        subsets_config = plots_config.get("subsets", [])
+        subset_order, subset_aliases = get_subset_order_and_aliases(subsets_config)
+
+        models = config["evaluate_models_pairwise"][wildcards.dataset]
+        dfs = []
+        for path, model in zip(input.metrics, models):
+            df = pl.read_parquet(path).with_columns(pl.lit(model).alias("model"))
+            dfs.append(df)
+        metrics = pl.concat(dfs)
+
+        metrics = metrics.filter(pl.col("metric") == "pairwise_accuracy")
+
+        available_subsets = set(metrics["subset"].unique().to_list())
+        subsets = [s for s in subset_order if s in available_subsets]
+
+        n_cols = 5
+        n_rows = (len(subsets) + n_cols - 1) // n_cols
+        fig, axes = plt.subplots(
+            n_rows, n_cols, figsize=(20, 4 * n_rows), squeeze=False
+        )
+        axes = axes.flatten()
+
+        for idx, subset in enumerate(subsets):
+            ax = axes[idx]
+            subset_data = metrics.filter(pl.col("subset") == subset).to_pandas()
+            subset_data = subset_data.sort_values("score", ascending=True)
+
+            plot_model_bars(ax, subset_data, models_config, baseline=PAIRWISE_BASELINE)
+            ax.set_xlabel("Pairwise accuracy")
+
+            subset_alias = subset_aliases.get(subset, subset)
+            n_pos = subset_data["n_pos"].iloc[0]
+            n_neg = subset_data["n_neg"].iloc[0]
+            ax.set_title(f"{subset_alias}\n(n={n_pos} vs. {n_neg})")
+
+        for idx in range(len(subsets), len(axes)):
+            axes[idx].set_visible(False)
+
+        plt.tight_layout()
+        plt.savefig(output[0])
+        plt.close()
+
+
+rule plot_mrr:
+    input:
+        metrics=lambda wc: expand(
+            "results/metrics_mrr/{dataset}/{model}.parquet",
+            dataset=wc.dataset,
+            model=config["evaluate_models_mrr"][wc.dataset],
+        ),
+    output:
+        "results/plots/mrr/{dataset}.svg",
+    run:
+        plots_config = config.get("plots", {})
+        models_config = plots_config.get("models", {})
+        subsets_config = plots_config.get("subsets", [])
+        subset_order, subset_aliases = get_subset_order_and_aliases(subsets_config)
+
+        models = config["evaluate_models_mrr"][wildcards.dataset]
+        dfs = []
+        for path, model in zip(input.metrics, models):
+            df = pl.read_parquet(path).with_columns(pl.lit(model).alias("model"))
+            dfs.append(df)
+        metrics = pl.concat(dfs)
+
+        metrics = metrics.filter(pl.col("metric") == "MRR")
+
+        available_subsets = set(metrics["subset"].unique().to_list())
+        subsets = [s for s in subset_order if s in available_subsets]
+
+        n_cols = 5
+        n_rows = (len(subsets) + n_cols - 1) // n_cols
+        fig, axes = plt.subplots(
+            n_rows, n_cols, figsize=(20, 4 * n_rows), squeeze=False
+        )
+        axes = axes.flatten()
+
+        for idx, subset in enumerate(subsets):
+            ax = axes[idx]
+            subset_data = metrics.filter(pl.col("subset") == subset).to_pandas()
+            subset_data = subset_data.sort_values("score", ascending=True)
+
+            plot_model_bars(ax, subset_data, models_config, baseline=MRR_BASELINE_10)
+            ax.set_xlabel("MRR")
+
+            subset_alias = subset_aliases.get(subset, subset)
+            n_pos = subset_data["n_pos"].iloc[0]
+            n_neg = subset_data["n_neg"].iloc[0]
+            ax.set_title(f"{subset_alias}\n(n={n_pos} vs. {n_neg})")
+
+        for idx in range(len(subsets), len(axes)):
+            axes[idx].set_visible(False)
+
+        plt.tight_layout()
+        plt.savefig(output[0])
+        plt.close()

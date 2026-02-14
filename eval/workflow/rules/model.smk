@@ -77,3 +77,67 @@ rule compute_metrics:
             )
 
         pl.DataFrame(rows).write_parquet(output[0])
+
+
+rule compute_metrics_pairwise:
+    input:
+        dataset=lambda wc: config["datasets"][wc.dataset],
+        preds="results/preds/{dataset}/{model}.parquet",
+    output:
+        "results/metrics_pairwise/{dataset}/{model}.parquet",
+    run:
+        V = pl.read_parquet(
+            input.dataset, columns=["label", "consequence_group", "match_group"]
+        )
+        score = pl.read_parquet(input.preds)["score"]
+        rows = []
+        for group in V["consequence_group"].unique().sort():
+            mask = V["consequence_group"] == group
+            subset = V.filter(mask)
+            group_scores = pairwise_accuracy_scores(
+                subset["label"], score.filter(mask), subset["match_group"]
+            )
+            mean, se = iid_mean_se(group_scores)
+            rows.append(
+                {
+                    "subset": group,
+                    "metric": "pairwise_accuracy",
+                    "score": mean,
+                    "se": se,
+                    "n_pos": subset["label"].sum(),
+                    "n_neg": len(subset) - subset["label"].sum(),
+                }
+            )
+        pl.DataFrame(rows).write_parquet(output[0])
+
+
+rule compute_metrics_mrr:
+    input:
+        dataset=lambda wc: config["datasets"][wc.dataset],
+        preds="results/preds/{dataset}/{model}.parquet",
+    output:
+        "results/metrics_mrr/{dataset}/{model}.parquet",
+    run:
+        V = pl.read_parquet(
+            input.dataset, columns=["label", "consequence_group", "match_group"]
+        )
+        score = pl.read_parquet(input.preds)["score"]
+        rows = []
+        for group in V["consequence_group"].unique().sort():
+            mask = V["consequence_group"] == group
+            subset = V.filter(mask)
+            group_scores = mean_reciprocal_rank_scores(
+                subset["label"], score.filter(mask), subset["match_group"]
+            )
+            mean, se = iid_mean_se(group_scores)
+            rows.append(
+                {
+                    "subset": group,
+                    "metric": "MRR",
+                    "score": mean,
+                    "se": se,
+                    "n_pos": subset["label"].sum(),
+                    "n_neg": len(subset) - subset["label"].sum(),
+                }
+            )
+        pl.DataFrame(rows).write_parquet(output[0])
