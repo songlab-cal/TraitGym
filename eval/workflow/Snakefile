@@ -18,12 +18,14 @@ rule all:
             dataset=list(config["evaluate_models"].keys()) + ["combined"],
         ),
         "results/plots/model_comparison/combined_ensemble.svg",
-
-
-rule all_score_histograms:
-    input:
+        "results/plots/model_comparison/promoterai_covered.svg",
+        "results/plots/model_comparison/spliceai_covered.svg",
         [
             f"results/plots/score_histogram/{dataset}/{model}.svg"
             for dataset, models in config["evaluate_models"].items()
             for model in models
         ],
+        expand(
+            "results/plots/auprc_by_distance/{dataset}.svg",
+            dataset=config["evaluate_models"].keys(),
+        ),
