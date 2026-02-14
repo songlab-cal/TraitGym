@@ -1,12 +1,11 @@
 import polars as pl
 
-SOURCE_ORDER = ["omim", "smedley_et_al", "hgmd"]
+SOURCE_ORDER = ["omim", "smedley_et_al"]
 
 SOURCE_LABELS = {
     "": "",
     "omim": "OMIM",
     "smedley_et_al": "Smedley et al.",
-    "hgmd": "HGMD",
 }
 
 

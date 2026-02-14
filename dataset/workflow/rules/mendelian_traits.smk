@@ -2,13 +2,12 @@ rule mendelian_traits_positives:
     input:
         "results/omim/variants.parquet",
         "results/smedley_et_al/variants.parquet",
-        "results/hgmd/variants.parquet",
         "results/gnomad/all.parquet",
         consequences=expand("results/consequences/{chrom}.parquet", chrom=CHROMS),
     output:
         "results/mendelian_traits/positives.parquet",
     run:
-        gnomad = pl.read_parquet(input[3], columns=COORDINATES + ["AF"])
+        gnomad = pl.read_parquet(input[2], columns=COORDINATES + ["AF"])
         V = (
             pl.concat(
                 [
@@ -16,12 +15,11 @@ rule mendelian_traits_positives:
                     pl.read_parquet(input[1]).with_columns(
                         source=pl.lit("smedley_et_al")
                     ),
-                    pl.read_parquet(input[2]).with_columns(source=pl.lit("hgmd")),
                 ],
                 how="diagonal_relaxed",
             )
             # reflects the order in which they were concatenated, from higher to lower
-            # priority: omim, smedley et al, hgmd
+            # priority: omim, smedley et al
             .unique(COORDINATES, keep="first", maintain_order=True)
             .join(gnomad, on=COORDINATES, how="left")
             # variants not in gnomAD are assigned AF = 0
