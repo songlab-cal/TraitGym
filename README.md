@@ -49,6 +49,11 @@
 - Tries to follow [recommended Snakemake structure](https://snakemake.readthedocs.io/en/stable/snakefiles/deployment.html)
 - GPN-Promoter code is in [the main GPN repo](https://github.com/songlab-cal/gpn)
 
+### Workflows
+- [`dataset/`](dataset/) — dataset curation
+- [`eval/`](eval/) — model evaluation
+- [`other/`](other/) — legacy code pending migration
+
 ### Installation
 First, clone the repo and `cd` into it.
 Second, install the dependencies:
