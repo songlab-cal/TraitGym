@@ -21,6 +21,17 @@ gpn_star:
     window_size: 256
     per_device_batch_size: 64
 
+bolinas:
+  bolinas_mendelian_traits:
+    repo_id: bolinas-dna/evals_mendelian_traits
+    revision: 15e85bbacd22383566b8c1f718c14e773c7ac860
+  bolinas_complex_traits:
+    repo_id: bolinas-dna/evals_complex_traits
+    revision: 241ac97d8e0abe18507ad3877505a662b3eb64ff
+  bolinas_eqtl:
+    repo_id: bolinas-dna/evals_eqtl
+    revision: d32b178d6e
+
 genome_url: "http://ftp.ensembl.org/pub/release-107/fasta/homo_sapiens/dna/Homo_sapiens.GRCh38.dna_sm.primary_assembly.fa.gz"
 
 datasets:
@@ -29,6 +40,9 @@ datasets:
   # mendelian_traits_all: "../dataset/results/dataset/mendelian_traits_all/test.parquet"
   mendelian_traits_gene_matched_1: "../dataset/results/dataset/mendelian_traits_gene_matched_1/test.parquet"
   mendelian_traits_gene_matched_9: "../dataset/results/dataset/mendelian_traits_gene_matched_9/test.parquet"
+  bolinas_mendelian_traits: "results/bolinas/datasets/bolinas_mendelian_traits.parquet"
+  bolinas_complex_traits: "results/bolinas/datasets/bolinas_complex_traits.parquet"
+  bolinas_eqtl: "results/bolinas/datasets/bolinas_eqtl.parquet"
 
 evaluate_models_pairwise:
   mendelian_traits_gene_matched_1:

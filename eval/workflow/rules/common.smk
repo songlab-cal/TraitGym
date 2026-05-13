@@ -8,6 +8,7 @@ from sklearn.metrics import average_precision_score
 
 from gpn.data import Genome
 from gpn.star.utils import get_llr, normalize_logits
+from huggingface_hub import hf_hub_download
 from traitgym.metrics import (
     iid_mean_se,
     mean_reciprocal_rank_scores,
@@ -21,6 +22,7 @@ from traitgym.variants import CHROMS, COORDINATES
 PRECOMPUTED_MODELS = list(config["precomputed"].keys())
 PRECOMPUTED_FEATURE_MODELS = PRECOMPUTED_MODELS + ["SpliceAI"]
 GPN_STAR_MODELS = list(config.get("gpn_star", {}).keys())
+BOLINAS_DATASETS = list(config.get("bolinas", {}).keys())
 
 
 rule download_genome:

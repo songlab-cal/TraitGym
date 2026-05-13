@@ -10,6 +10,7 @@ include: "rules/promoterai.smk"
 include: "rules/spliceai.smk"
 include: "rules/conservation.smk"
 include: "rules/plot.smk"
+include: "rules/bolinas.smk"
 
 
 rule all:
