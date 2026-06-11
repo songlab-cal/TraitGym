@@ -31,6 +31,9 @@ bolinas:
   bolinas_eqtl:
     repo_id: bolinas-dna/evals_eqtl
     revision: d32b178d6e
+  bolinas_sge:
+    repo_id: bolinas-dna/evals_sge
+    revision: 225d3d1ea32a4af547891b13c33b5e92a5aae849
 
 genome_url: "http://ftp.ensembl.org/pub/release-107/fasta/homo_sapiens/dna/Homo_sapiens.GRCh38.dna_sm.primary_assembly.fa.gz"
 
@@ -43,6 +46,7 @@ datasets:
   bolinas_mendelian_traits: "results/bolinas/datasets/bolinas_mendelian_traits.parquet"
   bolinas_complex_traits: "results/bolinas/datasets/bolinas_complex_traits.parquet"
   bolinas_eqtl: "results/bolinas/datasets/bolinas_eqtl.parquet"
+  bolinas_sge: "results/bolinas/datasets/bolinas_sge.parquet"
 
 evaluate_models_pairwise:
   mendelian_traits_gene_matched_1:
